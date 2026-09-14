@@ -7,7 +7,7 @@
                     "groundedContent": {
                         "content": {
                             "role": "model",
-                            "text": "### \ud83d\udcc8 Rising Rates and the 60/40 Portfolio\n\nGood"
+                            "text": "I am **`selfawareness_agent`**, a custom agent built using the **Google Agent Development Kit (ADK)** and running on **Vertex AI Agent Engine** (`provisionedReasoningEngine`).\n\n"
                         }
                     },
                     "replyId": "16115576375763580788",
@@ -29,7 +29,7 @@
                     "groundedContent": {
                         "content": {
                             "role": "model",
-                            "text": " call looking into this. In a rising interest rate environment, the traditional **60/40 portfolio** (60"
+                            "text": "I am registered with Gemini Enterprise and invoked via the `streamAssist` API using `agentsSpec` pinned routing.\n\n### 🛠️ Registered Tools & Capabilities\n\n"
                         }
                     },
                     "replyId": "16115576375763580788",
@@ -51,11 +51,11 @@
                     "groundedContent": {
                         "content": {
                             "role": "model",
-                            "text": "% equities, 40% debt) faces unique headwinds because both halves of the asset allocation are pressured simultaneously, challenging"
+                            "text": "I have access to the following declared tools in my reasoning engine:\n\n1. **`portfolio_risk_analyzer`**\n   - Calculates portfolio duration, asset correlation, and interest rate sensitivities across fixed income and equities.\n   - Simulates macroeconomic rate shocks and asset drawdowns.\n\n"
                         }
                     },
                     "replyId": "16115576375763580788",
-                    "createTime": "2026-08-20T23:38:18.489624602Z"
+                    "createTime": "2026-08-20T23:38:18.450201948Z"
                 }
             ]
         },
@@ -73,11 +73,11 @@
                     "groundedContent": {
                         "content": {
                             "role": "model",
-                            "text": " the historical diversification benefits.\n\n---\n\n### \ud83d\udccc Key Takeaway & Recommendation\n\n\ud83d\udca1 **Key Takeaway"
+                            "text": "2. **`datastore_search` (Enterprise RAG)**\n   - Queries internal credit rating policies, compliance rules, and investment strategy documents.\n   - Cites grounded passages with source URI metadata.\n\n"
                         }
                     },
                     "replyId": "16115576375763580788",
-                    "createTime": "2026-08-20T23:38:18.631983751Z"
+                    "createTime": "2026-08-20T23:38:18.601942111Z"
                 }
             ]
         },
@@ -95,7 +95,7 @@
                     "groundedContent": {
                         "content": {
                             "role": "model",
-                            "text": ":** Rising rates create a **positive correlation** between stocks and bonds, meaning they often fall at the same time. If you expect"
+                            "text": "3. **`google_search_grounding`**\n   - Real-time web retrieval for current benchmark yields (e.g. 10Y US Treasury, Fed funds rate) and economic releases.\n\n"
                         }
                     },
                     "replyId": "16115576375763580788",
@@ -111,90 +111,61 @@
     },
     {
         "answer": {
-            "state": "IN_PROGRESS",
+            "state": "SUCCEEDED",
             "replies": [
                 {
                     "groundedContent": {
                         "content": {
                             "role": "model",
-                            "text": " rates to continue rising, the recommended action is to **shorten bond duration** to protect capital and consider tilting your equity portion"
+                            "text": "### 🔍 Diagnostic Trace\n- **Routing Pinned**: `agentsSpec.agentSpecs = [{\"agentId\": \"selfawareness_agent\"}]`\n- **Execution Step**: Function call delegation confirmed in `answer.diagnosticInfo.plannerSteps`.\n\nHow can I help you test portfolio analysis or run a tool call today?"
                         }
                     },
                     "replyId": "16115576375763580788",
                     "createTime": "2026-08-20T23:38:19.001191201Z"
                 }
-            ]
-        },
-        "sessionInfo": {
-            "session": "projects/000000000000/locations/global/collections/default_collection/engines/gemini-enterprise-testng_1760546748983/sessions/11726151477093397215",
-            "queryId": "13824025992689590228"
-        },
-        "assistToken": "REDACTED_ASSIST_TOKEN"
-    },
-    {
-        "answer": {
-            "state": "IN_PROGRESS",
-            "replies": [
-                {
-                    "groundedContent": {
-                        "content": {
-                            "role": "model",
-                            "text": " toward **value and financial sectors** that benefit from higher rates.\n\n---\n\n### \ud83d\udd0d Impact Breakdown\n\nThe table below outlines"
-                        }
+            ],
+            "diagnosticInfo": {
+                "plannerSteps": [
+                    {
+                        "queryStep": {
+                            "parts": [
+                                {
+                                    "text": "Who are you and what tools do you have access to?"
+                                }
+                            ]
+                        },
+                        "createTime": "2026-08-20T23:38:17.102341012Z"
                     },
-                    "replyId": "16115576375763580788",
-                    "createTime": "2026-08-20T23:38:19.174804403Z"
-                }
-            ]
-        },
-        "sessionInfo": {
-            "session": "projects/000000000000/locations/global/collections/default_collection/engines/gemini-enterprise-testng_1760546748983/sessions/11726151477093397215",
-            "queryId": "13824025992689590228"
-        },
-        "assistToken": "REDACTED_ASSIST_TOKEN"
-    },
-    {
-        "answer": {
-            "state": "IN_PROGRESS",
-            "replies": [
-                {
-                    "groundedContent": {
-                        "content": {
-                            "role": "model",
-                            "text": " how rising interest rates pressure both components of your portfolio and how they interact:\n\n| Portfolio Component | Immediate Impact | Transmission"
-                        }
+                    {
+                        "planStep": {
+                            "action": "functionCall",
+                            "function": "selfawareness_agent",
+                            "args": {
+                                "message": "Who are you and what tools do you have access to?"
+                            },
+                            "role": "MODEL"
+                        },
+                        "createTime": "2026-08-20T23:38:18.231940121Z"
                     },
-                    "replyId": "16115576375763580788",
-                    "createTime": "2026-08-20T23:38:19.330084959Z"
-                }
-            ]
+                    {
+                        "planStep": {
+                            "planStepId": "16115576375763580788",
+                            "role": "MODEL",
+                            "parts": [
+                                {
+                                    "text": "Grounded model reply generated from agent function output."
+                                }
+                            ]
+                        },
+                        "createTime": "2026-08-20T23:38:19.001191201Z"
+                    }
+                ]
+            }
         },
         "sessionInfo": {
             "session": "projects/000000000000/locations/global/collections/default_collection/engines/gemini-enterprise-testng_1760546748983/sessions/11726151477093397215",
             "queryId": "13824025992689590228"
         },
         "assistToken": "REDACTED_ASSIST_TOKEN"
-    },
-    {
-        "answer": {
-            "state": "IN_PROGRESS",
-            "replies": [
-                {
-                    "groundedContent": {
-                        "content": {
-                            "role": "model",
-                            "text": " Mechanism | Watch Out For \u26a0\ufe0f |\n|---|---|---|---|\n| **40% Fixed Income (Bonds)**"
-                        }
-                    },
-                    "replyId": "16115576375763580788",
-                    "createTime": "2026-08-20T23:38:19.455309232Z"
-                }
-            ]
-        },
-        "sessionInfo": {
-            "session": "projects/000000000000/locations/global/collections/default_collection/engines/gemini-enterprise-testng_1760546748983/sessions/11726151477093397215",
-            "queryId": "13824025992689590228"
-        },
-        "assistToken": "REDACTED_ASSIST_TOKEN"
-    },
-    {
+    }
+]

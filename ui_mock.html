@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gemini StreamAssist Studio — UI/UX Mock</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    /* Custom scrollbars and code block styling */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--card); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  </style>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] h-screen flex flex-col overflow-hidden text-sm select-none">
+
+  <!-- ================= TOP NAVIGATION BAR ================= -->
+  <header class="h-14 border-b border-[var(--border)] bg-[var(--card)] px-4 flex items-center justify-between shrink-0">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-500 flex items-center justify-center font-bold text-white shadow-sm text-base">
+        GE
+      </div>
+      <div>
+        <div class="font-semibold text-base leading-tight flex items-center gap-2">
+          <span>Gemini StreamAssist Studio</span>
+          <span class="text-[10px] font-mono uppercase bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded border border-blue-500/20">v1alpha</span>
+        </div>
+        <p class="text-[11px] text-[var(--muted-foreground)]">Headless Interactive API Guide, Wire Debugger & Test Suite</p>
+      </div>
+    </div>
+
+    <!-- Mode Toggle & Environment Indicator -->
+    <div class="flex items-center space-x-3">
+      <!-- Mode Switcher -->
+      <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-1 flex items-center space-x-1 shadow-inner">
+        <button id="mode-sim" onclick="setMode('sim')" class="px-3 py-1 rounded-md text-xs font-medium transition-all bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm">
+          Offline Simulator <span class="opacity-75 text-[10px]">(outputs/)</span>
+        </button>
+        <button id="mode-live" onclick="setMode('live')" class="px-3 py-1 rounded-md text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+          Live Cloud Runner <span class="opacity-75 text-[10px]">(.env)</span>
+        </button>
+      </div>
+
+      <!-- Connection Pill -->
+      <div id="env-pill" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="text-xs font-mono text-[var(--muted-foreground)]">Simulated: <strong class="text-[var(--foreground)]">17 Payloads Ready</strong></span>
+      </div>
+
+      <!-- Help / Studio Guide Button -->
+      <button onclick="navigateToStudioDocs()" title="Studio Guide & Help" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)] hover:bg-[var(--card)] text-xs font-medium text-[var(--foreground)] transition-colors shadow-sm cursor-pointer">
+        <span class="w-4 h-4 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-[10px]">?</span>
+        <span>Help</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= MAIN LAYOUT ================= -->
+  <div class="flex flex-1 overflow-hidden">
+    
+    <!-- Left Sidebar Navigation -->
+    <aside class="w-64 border-r border-[var(--border)] bg-[var(--sidebar)] flex flex-col justify-between shrink-0">
+      <div class="p-3 space-y-1">
+        <div class="px-3 py-1.5 text-[11px] font-semibold tracking-wider text-[var(--muted-foreground)] uppercase">Modules</div>
+        
+        <button onclick="switchTab('docs')" id="nav-docs" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs font-medium bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] shadow-sm">
+          <span>📖</span> <span>Documentation</span>
+        </button>
+
+        <button onclick="switchTab('inspector')" id="nav-inspector" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--card)]/50">
+          <span>🔬</span> <span>Wire Stream Inspector</span>
+          <span class="ml-auto text-[10px] px-1.5 py-0.2 bg-blue-500/10 text-blue-500 rounded font-mono">Live</span>
+        </button>
+
+        <button onclick="switchTab('builder')" id="nav-builder" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--card)]/50">
+          <span>🛠️</span> <span>Chat Simulator</span>
+        </button>
+
+        <button onclick="switchTab('routing')" id="nav-routing" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--card)]/50">
+          <span>🧪</span> <span>Agent Routing Diagnostic</span>
+        </button>
+
+        <button onclick="switchTab('workspace')" id="nav-workspace" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--card)]/50">
+          <span>📁</span> <span>Sessions & Files</span>
+        </button>
+
+        <button onclick="switchTab('research')" id="nav-research" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--card)]/50">
+          <span>🔍</span> <span>Deep Research Flow</span>
+        </button>
+
+        <button onclick="switchTab('tests')" id="nav-tests" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--card)]/50">
+          <span>📊</span> <span>Test Suites</span>
+        </button>
+      </div>
+
+      <!-- Quick Preset Picker in Sidebar -->
+      <div class="p-3 border-t border-[var(--border)] bg-[var(--card)]/40 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-semibold text-[var(--muted-foreground)] uppercase">Sample Presets</span>
+          <span class="text-[10px] font-mono text-[var(--muted-foreground)]">27 scripts</span>
+        </div>
+        <select id="preset-selector" onchange="loadPreset(this.value)" class="w-full bg-[var(--background)] border border-[var(--border)] text-xs rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500">
+          <option value="01">01: Basic streamAssist (DCA query)</option>
+          <option value="08_adk">08: Invoke ADK Agent</option>
+          <option value="09_plan">09: Deep Research Plan</option>
+          <option value="10_exec">10: Deep Research Execute</option>
+          <option value="11_web">11: Web Grounding & Citations</option>
+          <option value="13_image">13: Image Generation</option>
+          <option value="19_skip">19: Chit-Chat Skip Classifier</option>
+          <option value="26_route">26: Routing Diagnosis</option>
+        </select>
+        <div class="text-[11px] text-[var(--muted-foreground)] flex items-center justify-between pt-1">
+          <span>Local Port: <code class="mono text-[var(--foreground)]">:3000</code></span>
+          <span class="text-emerald-500 font-medium">Ready</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Content Workspace -->
+    <main class="flex-1 overflow-auto bg-[var(--background)] p-5 relative">
+
+      <!-- ================= TAB 1: DOCUMENTATION ================= -->
+      <section id="view-docs" class="tab-view space-y-5">
+        <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+          <div>
+            <h2 class="text-xl font-bold">Documentation</h2>
+            <p class="text-xs text-[var(--muted-foreground)]">16 Chapters + 34 Field-Verified Gotchas & Architectural Specifications</p>
+          </div>
+          <div class="flex gap-2">
+            <input type="text" placeholder="Search docs & gotchas..." class="bg-[var(--card)] border border-[var(--border)] rounded-md px-3 py-1.5 text-xs w-64 focus:outline-none focus:ring-1 focus:ring-blue-500">
+            <button class="bg-[var(--card)] hover:bg-[var(--border)] border border-[var(--border)] px-3 py-1.5 rounded-md text-xs font-medium transition-colors">Glossary</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-5">
+          <!-- Chapter List (3 cols / 25%) -->
+          <div class="col-span-3 space-y-2">
+            <div class="text-xs font-semibold uppercase text-[var(--muted-foreground)] tracking-wider">Chapters</div>
+            <div class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-2 space-y-1 max-h-[600px] overflow-y-auto">
+              <div onclick="selectDocChapter('00_studio')" id="doc-chap-00" class="p-2 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 font-medium text-xs flex justify-between cursor-pointer border border-purple-500/20">
+                <span>00. Studio Guide & Functional Areas</span>
+                <span class="text-[10px] opacity-75">Studio Help</span>
+              </div>
+              <div onclick="selectDocChapter('01_overview')" id="doc-chap-01" class="p-2 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium text-xs flex justify-between cursor-pointer">
+                <span>01. Overview & Architecture</span>
+                <span class="text-[10px] opacity-75">GA / Matrix</span>
+              </div>
+              <div class="p-2 rounded hover:bg-[var(--background)] text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex justify-between cursor-pointer">
+                <span>02. Authentication & IAM</span>
+                <span class="text-[10px] opacity-75">Tokens/TLS</span>
+              </div>
+              <div class="p-2 rounded hover:bg-[var(--background)] text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex justify-between cursor-pointer">
+                <span>03. Request Anatomy</span>
+                <span class="text-[10px] opacity-75">v1alpha spec</span>
+              </div>
+              <div class="p-2 rounded hover:bg-[var(--background)] text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex justify-between cursor-pointer">
+                <span>09. Parsing the Stream</span>
+                <span class="text-[10px] opacity-75">JSON Array</span>
+              </div>
+              <div class="p-2 rounded hover:bg-[var(--background)] text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex justify-between cursor-pointer">
+                <span>11. Native A2A Direct Invocation</span>
+                <span class="text-[10px] opacity-75">message:stream</span>
+              </div>
+              <div class="p-2 rounded hover:bg-[var(--background)] text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex justify-between cursor-pointer">
+                <span>12. 34 Caveats & Gotchas</span>
+                <span class="text-[10px] text-amber-500 font-semibold">Critical</span>
+              </div>
+              <div class="p-2 rounded hover:bg-[var(--background)] text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex justify-between cursor-pointer">
+                <span>14. FSI Production Recipes</span>
+                <span class="text-[10px] opacity-75">End-to-end</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chapter Content Preview (9 cols / 75%) -->
+          <div class="col-span-9 space-y-4">
+            
+            <!-- Chapter 00: Studio Guide Preview -->
+            <div id="doc-content-00" class="hidden bg-[var(--card)] border border-[var(--border)] rounded-lg p-5 space-y-4">
+              <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+                <div>
+                  <h3 class="text-base font-bold text-purple-600 dark:text-purple-400">Chapter 00: Gemini StreamAssist Studio Guide</h3>
+                  <p class="text-xs text-[var(--muted-foreground)]">Functional Areas, Operational Modes, and Interactive Features</p>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[11px] bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 font-medium">Studio v1.0</span>
+              </div>
+
+              <div class="text-xs text-[var(--foreground)] space-y-3">
+                <p>Gemini StreamAssist Studio is a local developer tool and visual reference for building against the Gemini Enterprise <code class="mono bg-[var(--background)] px-1 py-0.5 rounded">streamAssist</code> API.</p>
+                
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                  <div class="p-3 rounded-lg border border-[var(--border)] bg-[var(--background)]/60 space-y-1">
+                    <div class="font-semibold text-xs text-blue-500 flex items-center gap-1.5">
+                      <span>⚡</span> <span>1. Dual-Mode Switcher</span>
+                    </div>
+                    <p class="text-[11px] text-[var(--muted-foreground)]">Seamlessly toggle between <strong>Offline Simulator</strong> (17 captured fixtures from <code class="mono text-[10px]">outputs/</code>) and <strong>Live Cloud Runner</strong> (invoking Google Discovery Engine via ADC & <code class="mono text-[10px]">.env</code>).</p>
+                  </div>
+
+                  <div class="p-3 rounded-lg border border-[var(--border)] bg-[var(--background)]/60 space-y-1">
+                    <div class="font-semibold text-xs text-blue-500 flex items-center gap-1.5">
+                      <span>🔬</span> <span>2. Wire Stream Inspector</span>
+                    </div>
+                    <p class="text-[11px] text-[var(--muted-foreground)]">Step-by-step token playback of chunked HTTP 200 JSON arrays, raw bytes vs assembled UI, thought accordions (<code class="mono text-[10px]">thought: true</code>), and Gotcha #9 mid-stream error alerts.</p>
+                  </div>
+
+                  <div class="p-3 rounded-lg border border-[var(--border)] bg-[var(--background)]/60 space-y-1">
+                    <div class="font-semibold text-xs text-blue-500 flex items-center gap-1.5">
+                      <span>🛠️</span> <span>3. Chat Simulator & Code Gen</span>
+                    </div>
+                    <p class="text-[11px] text-[var(--muted-foreground)]">Visual request builder with real-time schema validation and instant polyglot code synchronization (cURL, Python SDK, Node.js, and raw JSON).</p>
+                  </div>
+
+                  <div class="p-3 rounded-lg border border-[var(--border)] bg-[var(--background)]/60 space-y-1">
+                    <div class="font-semibold text-xs text-blue-500 flex items-center gap-1.5">
+                      <span>🧪</span> <span>4. Agent Routing Diagnostic</span>
+                    </div>
+                    <p class="text-[11px] text-[var(--muted-foreground)]">Interactive debugger for Gotcha #2: Inspects <code class="mono text-[10px]">plannerSteps</code> to confirm whether a query successfully delegated to an agent function or fell back to the base orchestrator.</p>
+                  </div>
+
+                  <div class="p-3 rounded-lg border border-[var(--border)] bg-[var(--background)]/60 space-y-1">
+                    <div class="font-semibold text-xs text-blue-500 flex items-center gap-1.5">
+                      <span>📁</span> <span>5. Sessions & Files Workspace</span>
+                    </div>
+                    <p class="text-[11px] text-[var(--muted-foreground)]">Multi-turn session manager with query/token correlation, context file explorer (<code class="mono text-[10px]">:listSessionFileMetadata</code>), and Recipe A copilot runner.</p>
+                  </div>
+
+                  <div class="p-3 rounded-lg border border-[var(--border)] bg-[var(--background)]/60 space-y-1">
+                    <div class="font-semibold text-xs text-blue-500 flex items-center gap-1.5">
+                      <span>🔍</span> <span>6. Deep Research Flow</span>
+                    </div>
+                    <p class="text-[11px] text-[var(--muted-foreground)]">Two-step protocol visualizer: Step 1 research plan editor & approval checklist ➔ Step 2 execution monitor filtering by <code class="mono text-[10px]">contentKind</code>.</p>
+                  </div>
+
+                  <div class="p-3 rounded-lg border border-[var(--border)] bg-[var(--background)]/60 space-y-1 col-span-2">
+                    <div class="font-semibold text-xs text-emerald-500 flex items-center gap-1.5">
+                      <span>📊</span> <span>7. Test Suites Dashboard</span>
+                    </div>
+                    <p class="text-[11px] text-[var(--muted-foreground)]">Interactive execution harness for all 12 smoke tests (<code class="mono text-[10px]">scripts/run-all.sh</code>) plus a 24-hour Cloud Run soak benchmark monitor with P50/P90 latency metrics.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chapter 01: Overview Preview (Default) -->
+            <div id="doc-content-01" class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-5 space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="text-base font-bold">Architecture: The Two Invocation Surfaces</h3>
+                <span class="px-2 py-0.5 rounded text-[11px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-medium">Verified Live</span>
+              </div>
+              
+              <!-- Architecture Diagram Box -->
+              <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-4 font-mono text-xs overflow-x-auto text-blue-500 dark:text-blue-400">
+your code ──POST :streamAssist──▶ default_assistant (orchestrator/planner)
+                                        │
+              ┌─────────────┬───────────┼──────────────┬───────────────┐
+              ▼             ▼           ▼              ▼               ▼
+        base answer   ADK agents   A2A agents   no-code agents   deep_research
+        (RAG + web)   (Agent       (external    (Agent Designer, (made by
+                       Engine)      endpoint)    managed)         Google)
+              </div>
+
+              <!-- Critical Gotcha Callouts Preview -->
+              <div class="space-y-3 pt-2">
+                <div class="text-xs font-semibold uppercase text-[var(--muted-foreground)] tracking-wider">Highlighted Gotchas for this Topic</div>
+                
+                <div class="border-l-4 border-amber-500 bg-amber-500/5 p-3 rounded-r-lg space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-semibold text-xs text-amber-600 dark:text-amber-400">Gotcha #2: agentsSpec scopes, it doesn't force.</span>
+                    <button onclick="switchTab('routing')" class="text-[10px] text-blue-500 underline font-medium">Verify in Routing Lab →</button>
+                  </div>
+                  <p class="text-xs text-[var(--muted-foreground)]">Meta questions may still be answered by the orchestrator even with an agent pinned. Verify routing via <code class="mono bg-amber-500/10 px-1 py-0.5 rounded">plannerSteps</code>.</p>
+                </div>
+
+                <div class="border-l-4 border-red-500 bg-red-500/5 p-3 rounded-r-lg space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-semibold text-xs text-red-600 dark:text-red-400">Gotcha #9: Errors arrive mid-stream with HTTP 200.</span>
+                    <button onclick="triggerSimulatedError()" class="text-[10px] text-blue-500 underline font-medium">Trigger in Inspector →</button>
+                  </div>
+                  <p class="text-xs text-[var(--muted-foreground)]">A <code class="mono bg-red-500/10 px-1 py-0.5 rounded">{"error": {...}}</code> chunk can arrive after successful chunks. HTTP status alone misses it.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 2: WIRE STREAM INSPECTOR ================= -->
+      <section id="view-inspector" class="tab-view hidden space-y-4">
+        <!-- Inspector Controls Bar -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-3 flex items-center justify-between shadow-sm">
+          <div class="flex items-center space-x-3">
+            <button id="stream-play-btn" onclick="toggleStreamSimulation()" class="px-4 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs flex items-center gap-1.5 shadow-sm transition-all">
+              <span id="play-icon">▶</span> <span id="play-text">Start Stream Playback</span>
+            </button>
+            <button onclick="stepChunk()" class="px-3 py-1.5 rounded-md bg-[var(--background)] hover:bg-[var(--border)] border border-[var(--border)] text-xs font-medium">
+              Next Chunk ⏭
+            </button>
+            <button onclick="resetStream()" class="px-3 py-1.5 rounded-md bg-[var(--background)] hover:bg-[var(--border)] border border-[var(--border)] text-xs font-medium">
+              Reset ↺
+            </button>
+            <div class="h-5 w-[1px] bg-[var(--border)]"></div>
+            <span class="text-xs text-[var(--muted-foreground)]">Chunk: <strong id="chunk-counter" class="text-[var(--foreground)] font-mono">0 / 7</strong></span>
+            <span class="text-xs text-[var(--muted-foreground)]">State: <span id="stream-state-badge" class="px-2 py-0.5 text-[10px] rounded font-mono bg-amber-500/10 text-amber-500 font-semibold">IDLE</span></span>
+          </div>
+
+          <div class="flex items-center space-x-3 text-xs">
+            <span class="text-[var(--muted-foreground)]">Playback Speed:</span>
+            <div class="flex border border-[var(--border)] rounded overflow-hidden">
+              <button class="px-2 py-1 bg-blue-500 text-white font-mono text-[10px]">1x</button>
+              <button class="px-2 py-1 bg-[var(--background)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] font-mono text-[10px]">2x</button>
+              <button class="px-2 py-1 bg-[var(--background)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] font-mono text-[10px]">Instant</button>
+            </div>
+            <button onclick="triggerSimulatedError()" class="px-2.5 py-1 text-[10px] rounded border border-red-500/30 text-red-500 hover:bg-red-500/10">
+              Simulate Gotcha #9 Error
+            </button>
+          </div>
+        </div>
+
+        <!-- Split Screen: Raw Stream vs Assembled UI -->
+        <div class="grid grid-cols-12 gap-4 h-[580px]">
+          
+          <!-- Left: Wire-Level JSON Array Stream (Raw Chunks) -->
+          <div class="col-span-6 bg-[var(--card)] border border-[var(--border)] rounded-lg flex flex-col overflow-hidden">
+            <div class="p-2.5 border-b border-[var(--border)] bg-[var(--background)]/60 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="font-semibold text-xs">Raw Wire Stream (Incremental JSON Array)</span>
+                <span class="text-[10px] mono bg-[var(--border)] px-1.5 py-0.5 rounded text-[var(--muted-foreground)]">application/json</span>
+              </div>
+              <span class="text-[10px] text-blue-500 font-mono">_iter_json_array</span>
+            </div>
+            <div id="raw-stream-buffer" class="flex-1 p-3 mono text-xs overflow-auto bg-[var(--background)] text-emerald-600 dark:text-emerald-400 whitespace-pre leading-relaxed">
+[
+  <span class="text-[var(--muted-foreground)]">// Waiting for stream start... Click "Start Stream Playback" above</span>
+            </div>
+          </div>
+
+          <!-- Right: Assembled UI Presentation -->
+          <div class="col-span-6 bg-[var(--card)] border border-[var(--border)] rounded-lg flex flex-col overflow-hidden">
+            <div class="p-2.5 border-b border-[var(--border)] bg-[var(--background)]/60 flex items-center justify-between">
+              <span class="font-semibold text-xs">Assembled Answer & Demuxed Entities</span>
+              <div class="flex items-center gap-2 text-[10px]">
+                <span class="text-[var(--muted-foreground)]">Token: <code class="mono font-semibold" id="assist-token-disp">REDACTED_ASSIST_TOKEN</code></span>
+              </div>
+            </div>
+
+            <div class="flex-1 p-4 overflow-auto space-y-4">
+              <!-- Internal Reasoning / Thought Accordion (Interleaved) -->
+              <details id="thought-box" class="group bg-[var(--background)] border border-[var(--border)] rounded-lg overflow-hidden text-xs">
+                <summary class="cursor-pointer p-2.5 font-medium flex items-center justify-between hover:bg-[var(--card)] text-[var(--muted-foreground)] select-none">
+                  <span class="flex items-center gap-1.5">
+                    <span>💭</span> <span>Internal Model Reasoning (<code class="mono">content.thought: true</code>)</span>
+                  </span>
+                  <span class="text-[10px] group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <div id="thought-content" class="p-3 border-t border-[var(--border)] text-xs text-[var(--muted-foreground)] italic whitespace-pre-wrap leading-relaxed">
+                  (No thought chunks received yet)
+                </div>
+              </details>
+
+              <!-- Main Answer Text Output -->
+              <div class="space-y-2">
+                <div class="text-[11px] font-semibold uppercase text-[var(--muted-foreground)] tracking-wider">Assembled Response</div>
+                <div id="assembled-text" class="p-3 bg-[var(--background)] border border-[var(--border)] rounded-lg min-h-[140px] text-xs leading-relaxed whitespace-pre-wrap">
+Ready to stream. Click "Start Stream Playback".
+                </div>
+              </div>
+
+              <!-- Citations / Grounding Panel -->
+              <div id="grounding-panel" class="hidden space-y-2">
+                <div class="text-[11px] font-semibold uppercase text-[var(--muted-foreground)] tracking-wider">Grounding References</div>
+                <div class="p-3 bg-[var(--background)] border border-[var(--border)] rounded-lg space-y-1.5 text-xs">
+                  <div class="flex items-center justify-between text-blue-500 hover:underline cursor-pointer">
+                    <span>🔗 Federal Reserve FOMC July 2026 Minutes</span>
+                    <span class="text-[10px] text-[var(--muted-foreground)] font-mono">confidence: 0.94</span>
+                  </div>
+                  <div class="flex items-center justify-between text-blue-500 hover:underline cursor-pointer">
+                    <span>🔗 U.S. Bureau of Labor Statistics (CPI Data)</span>
+                    <span class="text-[10px] text-[var(--muted-foreground)] font-mono">confidence: 0.88</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Media Generation Preview Card (Snippet 13/14) -->
+              <div id="media-panel" class="hidden space-y-2">
+                <div class="text-[11px] font-semibold uppercase text-[var(--muted-foreground)] tracking-wider">Generated Artifact</div>
+                <div class="p-3 bg-[var(--background)] border border-[var(--border)] rounded-lg flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-500 text-lg font-bold">🖼️</div>
+                    <div>
+                      <div class="text-xs font-semibold">generated_chart.png</div>
+                      <div class="text-[10px] text-[var(--muted-foreground)] mono">fileId: 421ff99e-795c-4990-8b74-a309a88b877a</div>
+                    </div>
+                  </div>
+                  <button class="px-3 py-1 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700">Download (alt=media)</button>
+                </div>
+              </div>
+
+              <!-- Mid-Stream Error Alert Box (Gotcha #9) -->
+              <div id="midstream-error" class="hidden p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-600 dark:text-red-400 space-y-1 text-xs">
+                <div class="font-bold flex items-center gap-1.5">
+                  <span>⚠️</span> <span>Gotcha #9 Mid-Stream Error Encountered (HTTP Status was 200!)</span>
+                </div>
+                <div class="mono text-[11px] bg-red-500/5 p-2 rounded border border-red-500/20">
+                  {"error": {"code": 400, "status": "FAILED_PRECONDITION", "message": "Agent 236556840724368325 is PRIVATE"}}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 3: CHAT SIMULATOR ================= -->
+      <section id="view-builder" class="tab-view hidden space-y-5">
+        <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+          <div>
+            <h2 class="text-xl font-bold">Chat Simulator</h2>
+            <p class="text-xs text-[var(--muted-foreground)]">Visually construct v1alpha payloads with live validation and synchronized code generation</p>
+          </div>
+          <button onclick="sendPlaygroundRequest()" class="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-md transition-all">
+            Send & Inspect Stream 🚀
+          </button>
+        </div>
+
+        <div class="grid grid-cols-12 gap-5">
+          <!-- Form Builder (Left) -->
+          <div class="col-span-6 space-y-4 bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
+            
+            <!-- Query -->
+            <div class="space-y-1">
+              <label class="text-xs font-semibold">User Query (<code class="mono">query.text</code>)</label>
+              <textarea id="req-query" rows="2" class="w-full bg-[var(--background)] border border-[var(--border)] rounded-md p-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none" oninput="syncCode()">What is dollar-cost averaging?</textarea>
+            </div>
+
+            <!-- Agent Pinning -->
+            <div class="space-y-1">
+              <div class="flex justify-between items-center">
+                <label class="text-xs font-semibold">Agent Pinning (<code class="mono">agentsSpec.agentSpecs</code>)</label>
+                <span class="text-[10px] text-amber-500">v1alpha only</span>
+              </div>
+              <input type="text" id="req-agent-id" placeholder="Optional agent ID (e.g. 236556840724368325)" class="w-full bg-[var(--background)] border border-[var(--border)] rounded-md px-3 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none" oninput="syncCode()">
+            </div>
+
+            <!-- Tools Spec Checkboxes -->
+            <div class="space-y-2">
+              <label class="text-xs font-semibold">Tools Specification (<code class="mono">toolsSpec</code>)</label>
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <label class="flex items-center gap-2 p-2 bg-[var(--background)] border border-[var(--border)] rounded cursor-pointer">
+                  <input type="checkbox" id="tool-web" onchange="syncCode()" class="rounded text-blue-600">
+                  <span>Web Grounding</span>
+                </label>
+                <label class="flex items-center gap-2 p-2 bg-[var(--background)] border border-[var(--border)] rounded cursor-pointer">
+                  <input type="checkbox" id="tool-datastore" onchange="syncCode()" class="rounded text-blue-600">
+                  <span>Data Store RAG</span>
+                </label>
+                <label class="flex items-center gap-2 p-2 bg-[var(--background)] border border-[var(--border)] rounded cursor-pointer">
+                  <input type="checkbox" id="tool-image" onchange="syncCode()" class="rounded text-blue-600">
+                  <span>Image Generation</span>
+                </label>
+                <label class="flex items-center gap-2 p-2 bg-[var(--background)] border border-[var(--border)] rounded cursor-pointer">
+                  <input type="checkbox" id="tool-video" onchange="syncCode()" class="rounded text-blue-600">
+                  <span>Video Generation</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Classifier Override (Gotcha 4) -->
+            <div class="flex items-center justify-between p-3 bg-[var(--background)] border border-[var(--border)] rounded-lg">
+              <div>
+                <div class="font-semibold text-xs">Override Chit-Chat Classifier</div>
+                <div class="text-[11px] text-[var(--muted-foreground)]">Sets <code class="mono">assistSkippingMode: "REQUEST_ASSIST"</code></div>
+              </div>
+              <input type="checkbox" id="req-force-assist" onchange="syncCode()" class="w-4 h-4 rounded text-blue-600">
+            </div>
+
+            <!-- Model Override -->
+            <div class="space-y-1">
+              <label class="text-xs font-semibold">Model Override (<code class="mono">generationSpec.modelId</code>)</label>
+              <select id="req-model" onchange="syncCode()" class="w-full bg-[var(--background)] border border-[var(--border)] rounded-md px-3 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none">
+                <option value="">Default Assistant Model</option>
+                <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Code Exporter (Right) -->
+          <div class="col-span-6 bg-[var(--card)] border border-[var(--border)] rounded-lg flex flex-col overflow-hidden">
+            <div class="p-2 border-b border-[var(--border)] bg-[var(--background)]/60 flex items-center justify-between">
+              <div class="flex space-x-1">
+                <button onclick="switchCodeTab('curl')" id="tab-code-curl" class="code-tab px-3 py-1 rounded text-xs font-medium bg-[var(--primary)] text-[var(--primary-foreground)]">cURL</button>
+                <button onclick="switchCodeTab('python')" id="tab-code-python" class="code-tab px-3 py-1 rounded text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)]">Python (GEClient)</button>
+                <button onclick="switchCodeTab('node')" id="tab-code-node" class="code-tab px-3 py-1 rounded text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)]">Node.js</button>
+                <button onclick="switchCodeTab('json')" id="tab-code-json" class="code-tab px-3 py-1 rounded text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)]">Request JSON</button>
+              </div>
+              <button onclick="copyCurrentCode()" class="px-2.5 py-1 text-[11px] rounded bg-[var(--background)] border border-[var(--border)] hover:bg-[var(--border)]">Copy</button>
+            </div>
+            <pre id="code-output" class="flex-1 p-4 mono text-xs overflow-auto bg-[var(--background)] text-blue-600 dark:text-blue-400 leading-relaxed whitespace-pre"></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 4: AGENT ROUTING DIAGNOSTIC ================= -->
+      <section id="view-routing" class="tab-view hidden space-y-5">
+        <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+          <div>
+            <h2 class="text-xl font-bold">Agent Routing Diagnostic</h2>
+            <p class="text-xs text-[var(--muted-foreground)]">Visual debugger for Gotcha #2: Inspect orchestrator plannerSteps to verify agent delegation</p>
+          </div>
+          <button onclick="runRoutingDiagnosis()" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md">
+            Diagnose Query Routing 🔎
+          </button>
+        </div>
+
+        <!-- Diagnostic Input Bar -->
+        <div class="p-4 bg-[var(--card)] border border-[var(--border)] rounded-lg grid grid-cols-12 gap-3 items-center">
+          <div class="col-span-4">
+            <label class="text-[11px] font-semibold text-[var(--muted-foreground)] uppercase">Target Agent ID</label>
+            <input type="text" id="route-agent-id" value="selfawareness_agent_id_01" class="w-full mt-1 bg-[var(--background)] border border-[var(--border)] rounded-md px-3 py-1.5 text-xs font-mono">
+          </div>
+          <div class="col-span-8">
+            <label class="text-[11px] font-semibold text-[var(--muted-foreground)] uppercase">Test Query</label>
+            <input type="text" id="route-query" value="Give me a market view on rising rates for my bond portfolio." class="w-full mt-1 bg-[var(--background)] border border-[var(--border)] rounded-md px-3 py-1.5 text-xs">
+          </div>
+        </div>
+
+        <!-- Diagnostic Result Banner -->
+        <div id="routing-verdict-banner" class="p-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">✅</span>
+            <div>
+              <div class="font-bold text-sm text-emerald-600 dark:text-emerald-400">VERDICT: Successfully Routed to Agent Function</div>
+              <div class="text-xs text-[var(--muted-foreground)]">Found functionCall <code class="mono font-semibold text-[var(--foreground)]">'selfawareness_agent'</code> in planner step 2. Pinned agent answered.</div>
+            </div>
+          </div>
+          <span class="px-2.5 py-1 rounded text-xs font-mono bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold">ROUTED</span>
+        </div>
+
+        <!-- Visual Planner Steps Tree -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-5 space-y-3">
+          <div class="text-xs font-semibold uppercase text-[var(--muted-foreground)] tracking-wider">Planner Steps Trace (<code class="mono">diagnosticInfo.plannerSteps</code>)</div>
+          
+          <div class="space-y-2">
+            <!-- Step 1: User Query -->
+            <div class="p-3 bg-[var(--background)] border border-[var(--border)] rounded-lg flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-500 font-bold">STEP 1</span>
+                <div>
+                  <div class="text-xs font-semibold">User Intent Classification</div>
+                  <div class="text-xs text-[var(--muted-foreground)] mono">"Give me a market view on rising rates for my bond portfolio."</div>
+                </div>
+              </div>
+              <span class="text-xs text-[var(--muted-foreground)]">queryStep</span>
+            </div>
+
+            <!-- Step 2: Agent Delegation Call -->
+            <div class="p-3 bg-emerald-500/5 border border-emerald-500/30 rounded-lg flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold">STEP 2</span>
+                <div>
+                  <div class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Agent Function Invoked</div>
+                  <div class="text-xs text-[var(--foreground)] mono font-bold">functionCall: selfawareness_agent</div>
+                </div>
+              </div>
+              <span class="text-xs font-mono text-emerald-600 dark:text-emerald-400">functionCall</span>
+            </div>
+
+            <!-- Step 3: Direct Answer Synthesis -->
+            <div class="p-3 bg-[var(--background)] border border-[var(--border)] rounded-lg flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-gray-500/10 text-[var(--muted-foreground)] font-bold">STEP 3</span>
+                <div>
+                  <div class="text-xs font-semibold">Answer Assembly & Stream Finalization</div>
+                  <div class="text-xs text-[var(--muted-foreground)] mono">call: answer-directly</div>
+                </div>
+              </div>
+              <span class="text-xs text-[var(--muted-foreground)]">finalState: SUCCEEDED</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 5: SESSIONS & FILES ================= -->
+      <section id="view-workspace" class="tab-view hidden space-y-5">
+        <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+          <div>
+            <h2 class="text-xl font-bold">Sessions & Context Files Workspace</h2>
+            <p class="text-xs text-[var(--muted-foreground)]">Multi-turn memory inspection, file context upload, and Recipe A execution</p>
+          </div>
+          <button class="px-4 py-1.5 rounded-md bg-[var(--card)] hover:bg-[var(--border)] border border-[var(--border)] text-xs font-medium">
+            + New Session (-)
+          </button>
+        </div>
+
+        <div class="grid grid-cols-12 gap-5">
+          <!-- Multi-turn Session Turns -->
+          <div class="col-span-7 bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 space-y-3">
+            <div class="flex items-center justify-between border-b border-[var(--border)] pb-2">
+              <div class="text-xs font-semibold">Active Session: <code class="mono font-bold text-blue-500">7460754264515114558</code></div>
+              <span class="text-[10px] text-amber-500 font-medium">Gotcha #20 Memory Active</span>
+            </div>
+
+            <!-- Turn 1 -->
+            <div class="p-3 bg-[var(--background)] border border-[var(--border)] rounded-lg space-y-1.5">
+              <div class="flex justify-between text-[11px] text-[var(--muted-foreground)]">
+                <span class="font-bold text-[var(--foreground)]">Turn 1 (User)</span>
+                <span>2026-08-20 23:19:25</span>
+              </div>
+              <p class="text-xs">"I am a portfolio manager focused on municipal fixed income."</p>
+            </div>
+
+            <!-- Turn 2 (Recalled context) -->
+            <div class="p-3 bg-blue-500/5 border border-blue-500/20 rounded-lg space-y-1.5">
+              <div class="flex justify-between text-[11px] text-[var(--muted-foreground)]">
+                <span class="font-bold text-blue-600 dark:text-blue-400">Turn 2 (Assistant Recall)</span>
+                <span class="text-emerald-500 font-mono text-[10px]">recalled_facts: fixed income</span>
+              </div>
+              <p class="text-xs">"As someone working in fixed income, you are likely keeping a close eye on the shifts in committee consensus..."</p>
+            </div>
+          </div>
+
+          <!-- Files Attached to Session -->
+          <div class="col-span-5 bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 space-y-3">
+            <div class="flex items-center justify-between border-b border-[var(--border)] pb-2">
+              <div class="text-xs font-semibold">Context Files (<code class="mono">:listSessionFileMetadata</code>)</div>
+              <span class="text-[10px] text-emerald-500">Gotcha #17 compliant</span>
+            </div>
+
+            <div class="border-2 border-dashed border-[var(--border)] rounded-lg p-4 text-center cursor-pointer hover:bg-[var(--background)] transition-colors">
+              <div class="text-2xl mb-1">📄</div>
+              <div class="text-xs font-semibold">Upload Context File</div>
+              <div class="text-[10px] text-[var(--muted-foreground)]">Drag & drop PDF, CSV, TXT to attach to session</div>
+            </div>
+
+            <div class="space-y-2">
+              <div class="p-2.5 bg-[var(--background)] border border-[var(--border)] rounded-md flex items-center justify-between text-xs">
+                <div>
+                  <div class="font-medium">loan-package.pdf</div>
+                  <div class="text-[10px] mono text-[var(--muted-foreground)]">fileId: 4299134345303410947</div>
+                </div>
+                <button class="text-blue-500 hover:underline text-[11px]">Query File →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 6: DEEP RESEARCH ================= -->
+      <section id="view-research" class="tab-view hidden space-y-5">
+        <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+          <div>
+            <h2 class="text-xl font-bold">Deep Research Protocol Visualizer</h2>
+            <p class="text-xs text-[var(--muted-foreground)]">Visualizes the 2-step API flow: Step 1 Plan Generation & Approval ➔ Step 2 Execution Monitor</p>
+          </div>
+          <span class="px-2.5 py-1 rounded text-xs font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+            Allowlisted GA Feature
+          </span>
+        </div>
+
+        <div class="grid grid-cols-12 gap-5">
+          <!-- Step 1: Research Plan (Snippet 09) -->
+          <div class="col-span-5 bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 space-y-3">
+            <div class="flex items-center justify-between border-b border-[var(--border)] pb-2">
+              <span class="text-xs font-bold text-purple-500 uppercase">Step 1: Generated Plan (<code class="mono">RESEARCH_PLAN</code>)</span>
+              <span class="text-[10px] text-emerald-500">Approved</span>
+            </div>
+            
+            <div class="space-y-2 text-xs">
+              <div class="font-semibold">Topic: Trends in Commercial Real Estate Debt AI</div>
+              <div class="space-y-1.5 p-3 bg-[var(--background)] border border-[var(--border)] rounded-lg">
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" checked class="rounded text-purple-600">
+                  <span>CMBS maturity wall refinancing risks</span>
+                </label>
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" checked class="rounded text-purple-600">
+                  <span>AI adoption in automated loan underwriting</span>
+                </label>
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" checked class="rounded text-purple-600">
+                  <span>Regional bank exposure & reserve adjustments</span>
+                </label>
+              </div>
+              <button class="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded font-semibold text-xs">
+                Launch Step 2 Execution (Snippet 10) 🚀
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 2: Live Execution & Final Report (Snippet 10) -->
+          <div class="col-span-7 bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 space-y-3">
+            <div class="flex items-center justify-between border-b border-[var(--border)] pb-2">
+              <span class="text-xs font-bold uppercase text-[var(--muted-foreground)]">Step 2: Execution Feed by <code class="mono">contentKind</code></span>
+              <span class="text-[10px] mono text-purple-500 animate-pulse">● Executing (~3m runtime)</span>
+            </div>
+
+            <div class="space-y-2 max-h-[460px] overflow-y-auto">
+              <div class="p-2.5 bg-[var(--background)] border border-[var(--border)] rounded text-xs space-y-1">
+                <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-500 font-bold">RESEARCH_QUESTION</span>
+                <p class="text-[var(--muted-foreground)]">"Investigating 2026 debt yield requirements across non-bank lenders..."</p>
+              </div>
+
+              <div class="p-2.5 bg-[var(--background)] border border-[var(--border)] rounded text-xs space-y-1">
+                <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500 font-bold">RESEARCH_REPORT</span>
+                <div class="p-2 bg-[var(--card)] rounded text-[11px] leading-relaxed">
+                  <strong>Executive Summary:</strong> The commercial real estate debt market in 2026 is experiencing a structural pivot towards private credit platforms incorporating automated covenant compliance monitoring...
+                </div>
+              </div>
+
+              <!-- Audio summary card -->
+              <div class="p-2.5 bg-[var(--background)] border border-[var(--border)] rounded text-xs flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">🎙️</span>
+                  <div>
+                    <div class="font-bold">Generated Audio Summary Brief</div>
+                    <div class="text-[10px] text-[var(--muted-foreground)] mono">audio/mp3 • 4.2 MB</div>
+                  </div>
+                </div>
+                <button class="px-3 py-1 bg-purple-600 text-white rounded text-xs font-medium">Play Audio</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 7: TEST SUITES ================= -->
+      <section id="view-tests" class="tab-view hidden space-y-5">
+        <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+          <div>
+            <h2 class="text-xl font-bold">Test Suites</h2>
+            <p class="text-xs text-[var(--muted-foreground)]">Execute local smoke checks (`run-all.sh`) and inspect 24h Cloud Run soak benchmarks (`soak/`)</p>
+          </div>
+          <button id="run-smoke-btn" onclick="runSmokeSuite()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-md">
+            Execute Smoke Suite (12 Checks) ▶
+          </button>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="grid grid-cols-4 gap-4">
+          <div class="p-3 bg-[var(--card)] border border-[var(--border)] rounded-lg">
+            <div class="text-[11px] text-[var(--muted-foreground)] font-semibold uppercase">Availability Rate</div>
+            <div class="text-2xl font-bold text-emerald-500 mt-1">99.85%</div>
+            <div class="text-[10px] text-[var(--muted-foreground)]">Critical assertions across 288 runs</div>
+          </div>
+          <div class="p-3 bg-[var(--card)] border border-[var(--border)] rounded-lg">
+            <div class="text-[11px] text-[var(--muted-foreground)] font-semibold uppercase">P90 Stream Latency</div>
+            <div class="text-2xl font-bold text-blue-500 mt-1">420 ms</div>
+            <div class="text-[10px] text-[var(--muted-foreground)]">Time-to-first-chunk (fast tier)</div>
+          </div>
+          <div class="p-3 bg-[var(--card)] border border-[var(--border)] rounded-lg">
+            <div class="text-[11px] text-[var(--muted-foreground)] font-semibold uppercase">Routing Fidelity</div>
+            <div class="text-2xl font-bold text-purple-500 mt-1">99.4%</div>
+            <div class="text-[10px] text-[var(--muted-foreground)]">Gotcha #2 observation rate</div>
+          </div>
+          <div class="p-3 bg-[var(--card)] border border-[var(--border)] rounded-lg">
+            <div class="text-[11px] text-[var(--muted-foreground)] font-semibold uppercase">Smoke Suite Status</div>
+            <div id="smoke-summary" class="text-2xl font-bold text-[var(--foreground)] mt-1">Ready</div>
+            <div class="text-[10px] text-[var(--muted-foreground)]">12 test targets defined</div>
+          </div>
+        </div>
+
+        <!-- Test Results Table -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-lg overflow-hidden">
+          <div class="p-3 border-b border-[var(--border)] bg-[var(--background)]/60 font-semibold text-xs flex justify-between">
+            <span>Smoke Checks (scripts/run-all.sh)</span>
+            <span class="text-[var(--muted-foreground)]">Pass: <strong id="smoke-pass-count" class="text-emerald-500">0</strong> / Fail: <strong id="smoke-fail-count" class="text-red-500">0</strong></span>
+          </div>
+          <div id="smoke-test-list" class="divide-y divide-[var(--border)] text-xs">
+            <!-- Test Row 1 -->
+            <div class="p-3 flex items-center justify-between hover:bg-[var(--background)]">
+              <div class="flex items-center gap-3">
+                <span class="test-status-pill px-2 py-0.5 rounded text-[10px] font-mono bg-gray-500/10 text-[var(--muted-foreground)]">PENDING</span>
+                <span class="font-medium">01: basic streamAssist ("Say OK.")</span>
+              </div>
+              <span class="test-latency text-mono text-[var(--muted-foreground)]">-</span>
+            </div>
+            <!-- Test Row 2 -->
+            <div class="p-3 flex items-center justify-between hover:bg-[var(--background)]">
+              <div class="flex items-center gap-3">
+                <span class="test-status-pill px-2 py-0.5 rounded text-[10px] font-mono bg-gray-500/10 text-[var(--muted-foreground)]">PENDING</span>
+                <span class="font-medium">02: extract answer text (strip thoughts)</span>
+              </div>
+              <span class="test-latency text-mono text-[var(--muted-foreground)]">-</span>
+            </div>
+            <!-- Test Row 3 -->
+            <div class="p-3 flex items-center justify-between hover:bg-[var(--background)]">
+              <div class="flex items-center gap-3">
+                <span class="test-status-pill px-2 py-0.5 rounded text-[10px] font-mono bg-gray-500/10 text-[var(--muted-foreground)]">PENDING</span>
+                <span class="font-medium">04: multi-turn session turn memory</span>
+              </div>
+              <span class="test-latency text-mono text-[var(--muted-foreground)]">-</span>
+            </div>
+            <!-- Test Row 4 -->
+            <div class="p-3 flex items-center justify-between hover:bg-[var(--background)]">
+              <div class="flex items-center gap-3">
+                <span class="test-status-pill px-2 py-0.5 rounded text-[10px] font-mono bg-gray-500/10 text-[var(--muted-foreground)]">PENDING</span>
+                <span class="font-medium">11: web grounding with live retrieval</span>
+              </div>
+              <span class="test-latency text-mono text-[var(--muted-foreground)]">-</span>
+            </div>
+            <!-- Test Row 5 -->
+            <div class="p-3 flex items-center justify-between hover:bg-[var(--background)]">
+              <div class="flex items-center gap-3">
+                <span class="test-status-pill px-2 py-0.5 rounded text-[10px] font-mono bg-gray-500/10 text-[var(--muted-foreground)]">PENDING</span>
+                <span class="font-medium">15+16: file upload & query round-trip</span>
+              </div>
+              <span class="test-latency text-mono text-[var(--muted-foreground)]">-</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ================= LOGIC & INTERACTIONS SCRIPT ================= -->
+  <script>
+    // Tab switching
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(el => {
+        el.classList.remove('bg-[var(--card)]', 'border', 'border-[var(--border)]', 'text-[var(--foreground)]', 'shadow-sm');
+        el.classList.add('text-[var(--muted-foreground)]');
+      });
+      
+      const targetView = document.getElementById(`view-${tabId}`);
+      if (targetView) targetView.classList.remove('hidden');
+      
+      const targetNav = document.getElementById(`nav-${tabId}`);
+      if (targetNav) {
+        targetNav.classList.add('bg-[var(--card)]', 'border', 'border-[var(--border)]', 'text-[var(--foreground)]', 'shadow-sm');
+        targetNav.classList.remove('text-[var(--muted-foreground)]');
+      }
+    }
+
+    // Mode Toggle
+    function setMode(mode) {
+      const simBtn = document.getElementById('mode-sim');
+      const liveBtn = document.getElementById('mode-live');
+      const pill = document.getElementById('env-pill');
+
+      if (mode === 'sim') {
+        simBtn.className = 'px-3 py-1 rounded-md text-xs font-medium transition-all bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm';
+        liveBtn.className = 'px-3 py-1 rounded-md text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]';
+        pill.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span class="text-xs font-mono text-[var(--muted-foreground)]">Simulated: <strong class="text-[var(--foreground)]">17 Payloads Ready</strong></span>';
+      } else {
+        liveBtn.className = 'px-3 py-1 rounded-md text-xs font-medium transition-all bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm';
+        simBtn.className = 'px-3 py-1 rounded-md text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]';
+        pill.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span><span class="text-xs font-mono text-[var(--muted-foreground)]">Connected: <strong class="text-[var(--foreground)]">.env loaded (gcloud ADC)</strong></span>';
+      }
+    }
+
+    // Wire Stream Simulation Logic (Sample Payload 01)
+    const sampleChunks = [
+      {
+        text: "**Dollar-cost averaging** is an investment strategy where you regularly invest a fixed amount of",
+        thought: "User is asking for an investment definition. Standard financial literacy concept. Explaining clearly.",
+        state: "IN_PROGRESS"
+      },
+      {
+        text: " money at set intervals, regardless of whether the asset's price is high or low,",
+        thought: null,
+        state: "IN_PROGRESS"
+      },
+      {
+        text: " to reduce the impact of market volatility over time. 📊\n\n---\n\n### Key Benefits:\n- **Removes Emotion:** Takes away the urge to time the market.",
+        thought: null,
+        state: "IN_PROGRESS"
+      },
+      {
+        text: "\n- **Disciplined Savings:** Encourages consistent long-term investing.",
+        thought: null,
+        state: "IN_PROGRESS"
+      },
+      {
+        text: "\n- **Lowers Average Cost:** Automatically buys more shares when prices dip.",
+        thought: null,
+        state: "IN_PROGRESS"
+      },
+      {
+        text: "\n\n*Note: Does not guarantee profit or protect against loss in declining markets.*",
+        thought: "Adding compliance disclaimer for financial content.",
+        state: "SUCCEEDED"
+      }
+    ];
+
+    let currentChunkIdx = 0;
+    let streamTimer = null;
+    let isStreaming = false;
+
+    function renderStreamChunk(idx) {
+      const chunk = sampleChunks[idx];
+      if (!chunk) return;
+
+      document.getElementById('chunk-counter').textContent = `${idx + 1} / ${sampleChunks.length}`;
+      document.getElementById('stream-state-badge').textContent = chunk.state;
+      document.getElementById('stream-state-badge').className = chunk.state === 'SUCCEEDED' 
+        ? 'px-2 py-0.5 text-[10px] rounded font-mono bg-emerald-500/10 text-emerald-500 font-semibold'
+        : 'px-2 py-0.5 text-[10px] rounded font-mono bg-blue-500/10 text-blue-500 font-semibold';
+
+      // Update Raw JSON buffer
+      const rawBuf = document.getElementById('raw-stream-buffer');
+      const chunkJson = JSON.stringify({
+        answer: {
+          state: chunk.state,
+          replies: [{
+            groundedContent: {
+              content: {
+                role: "model",
+                text: chunk.text,
+                thought: chunk.thought ? true : undefined
+              }
+            }
+          }]
+        },
+        sessionInfo: { session: "projects/.../sessions/7460754264515114558" },
+        assistToken: "REDACTED_ASSIST_TOKEN"
+      }, null, 2);
+
+      if (idx === 0) {
+        rawBuf.innerHTML = '[\n  ' + chunkJson.replace(/</g, '&lt;');
+      } else {
+        rawBuf.innerHTML += ',\n  ' + chunkJson.replace(/</g, '&lt;');
+      }
+      rawBuf.scrollTop = rawBuf.scrollHeight;
+
+      // Update Assembled Text
+      const textElem = document.getElementById('assembled-text');
+      if (idx === 0) textElem.textContent = "";
+      textElem.textContent += chunk.text;
+
+      // Update Thought Trace if present
+      if (chunk.thought) {
+        const thoughtElem = document.getElementById('thought-content');
+        if (thoughtElem.textContent.includes('No thought')) thoughtElem.textContent = "";
+        thoughtElem.textContent += `[Step ${idx + 1}] ${chunk.thought}\n`;
+      }
+    }
+
+    function toggleStreamSimulation() {
+      if (isStreaming) {
+        clearInterval(streamTimer);
+        isStreaming = false;
+        document.getElementById('play-icon').textContent = '▶';
+        document.getElementById('play-text').textContent = 'Resume Playback';
+      } else {
+        isStreaming = true;
+        document.getElementById('play-icon').textContent = '⏸';
+        document.getElementById('play-text').textContent = 'Pause Playback';
+
+        streamTimer = setInterval(() => {
+          if (currentChunkIdx < sampleChunks.length) {
+            renderStreamChunk(currentChunkIdx);
+            currentChunkIdx++;
+          } else {
+            clearInterval(streamTimer);
+            isStreaming = false;
+            document.getElementById('play-icon').textContent = '▶';
+            document.getElementById('play-text').textContent = 'Replay Stream';
+            document.getElementById('raw-stream-buffer').innerHTML += '\n]';
+          }
+        }, 350);
+      }
+    }
+
+    function stepChunk() {
+      if (currentChunkIdx < sampleChunks.length) {
+        renderStreamChunk(currentChunkIdx);
+        currentChunkIdx++;
+      }
+    }
+
+    function resetStream() {
+      clearInterval(streamTimer);
+      isStreaming = false;
+      currentChunkIdx = 0;
+      document.getElementById('play-icon').textContent = '▶';
+      document.getElementById('play-text').textContent = 'Start Stream Playback';
+      document.getElementById('chunk-counter').textContent = `0 / ${sampleChunks.length}`;
+      document.getElementById('stream-state-badge').textContent = 'IDLE';
+      document.getElementById('stream-state-badge').className = 'px-2 py-0.5 text-[10px] rounded font-mono bg-amber-500/10 text-amber-500 font-semibold';
+      document.getElementById('raw-stream-buffer').innerHTML = '[\n  <span class="text-[var(--muted-foreground)]">// Stream reset. Click "Start Stream Playback"</span>';
+      document.getElementById('assembled-text').textContent = 'Ready to stream. Click "Start Stream Playback".';
+      document.getElementById('thought-content').textContent = '(No thought chunks received yet)';
+      document.getElementById('midstream-error').classList.add('hidden');
+      document.getElementById('grounding-panel').classList.add('hidden');
+      document.getElementById('media-panel').classList.add('hidden');
+    }
+
+    function triggerSimulatedError() {
+      switchTab('inspector');
+      document.getElementById('midstream-error').classList.remove('hidden');
+      const rawBuf = document.getElementById('raw-stream-buffer');
+      rawBuf.innerHTML += ',\n  <span class="text-red-500 font-bold">' + JSON.stringify({
+        error: {
+          code: 400,
+          status: "FAILED_PRECONDITION",
+          message: "Agent 236556840724368325 is PRIVATE"
+        }
+      }, null, 2) + '</span>\n]';
+      document.getElementById('stream-state-badge').textContent = 'FAILED';
+      document.getElementById('stream-state-badge').className = 'px-2 py-0.5 text-[10px] rounded font-mono bg-red-500/20 text-red-500 font-bold';
+    }
+
+    // Polyglot Code Generator & Presets
+    let currentCodeLang = 'curl';
+
+    function switchCodeTab(lang) {
+      currentCodeLang = lang;
+      document.querySelectorAll('.code-tab').forEach(el => {
+        el.classList.remove('bg-[var(--primary)]', 'text-[var(--primary-foreground)]');
+        el.classList.add('text-[var(--muted-foreground)]');
+      });
+      const activeBtn = document.getElementById(`tab-code-${lang}`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-[var(--primary)]', 'text-[var(--primary-foreground)]');
+        activeBtn.classList.remove('text-[var(--muted-foreground)]');
+      }
+      syncCode();
+    }
+
+    function syncCode() {
+      const q = document.getElementById('req-query').value || "What is dollar-cost averaging?";
+      const agentId = document.getElementById('req-agent-id').value.trim();
+      const forceAssist = document.getElementById('req-force-assist').checked;
+      const model = document.getElementById('req-model').value;
+      const web = document.getElementById('tool-web').checked;
+
+      const body = {
+        query: { text: q },
+        session: "projects/your-project-id/locations/global/collections/default_collection/engines/your-app/sessions/-"
+      };
+      if (agentId) body.agentsSpec = { agentSpecs: [{ agentId }] };
+      if (forceAssist) body.assistSkippingMode = "REQUEST_ASSIST";
+      if (model) body.generationSpec = { modelId: model };
+      if (web) body.toolsSpec = { webGroundingSpec: {} };
+
+      let code = "";
+      if (currentCodeLang === 'curl') {
+        code = `curl -s -N -X POST \\\n  "https://discoveryengine.googleapis.com/v1alpha/projects/your-project-id/locations/global/collections/default_collection/engines/your-app/assistants/default_assistant:streamAssist" \\\n  -H "Authorization: Bearer $(gcloud auth print-access-token)" \\\n  -H "Content-Type: application/json" \\\n  -H "X-Goog-User-Project: your-project-id" \\\n  -d '${JSON.stringify(body, null, 2)}'`;
+      } else if (currentCodeLang === 'python') {
+        code = `from ge_streamassist import GEClient\n\nge = GEClient(project_id="your-project-id", app_id="your-app")\n\nfor chunk in ge.stream_assist(\n    query="${q}",\n${agentId ? `    agent_id="${agentId}",\n` : ''}${forceAssist ? `    force_assist=True,\n` : ''}${model ? `    model_id="${model}",\n` : ''}):\n    print(chunk, end="", flush=True)`;
+      } else if (currentCodeLang === 'node') {
+        code = `import { GEClient } from "./ge-streamassist.mjs";\n\nconst ge = new GEClient({ projectId: "your-project-id", appId: "your-app" });\n\nfor await (const chunk of ge.streamAssist({\n  query: "${q}",\n${agentId ? `  agentId: "${agentId}",\n` : ''}${forceAssist ? `  forceAssist: true,\n` : ''}})) {\n  process.stdout.write(chunk.text || "");\n}`;
+      } else {
+        code = JSON.stringify(body, null, 2);
+      }
+
+      document.getElementById('code-output').textContent = code;
+    }
+
+    function copyCurrentCode() {
+      const text = document.getElementById('code-output').textContent;
+      navigator.clipboard.writeText(text);
+      alert("Code snippet copied to clipboard!");
+    }
+
+    function sendPlaygroundRequest() {
+      switchTab('inspector');
+      resetStream();
+      toggleStreamSimulation();
+    }
+
+    function loadPreset(val) {
+      if (val === '01') {
+        document.getElementById('req-query').value = "What is dollar-cost averaging?";
+        document.getElementById('req-agent-id').value = "";
+        document.getElementById('req-force-assist').checked = false;
+        switchTab('inspector');
+        resetStream();
+      } else if (val === '08_adk') {
+        document.getElementById('req-query').value = "Run compliance KYC verification on portfolio #4711.";
+        document.getElementById('req-agent-id').value = "compliance_adk_agent_01";
+        document.getElementById('req-force-assist').checked = false;
+        switchTab('builder');
+      } else if (val === '09_plan') {
+        switchTab('research');
+      } else if (val === '10_exec') {
+        switchTab('research');
+      } else if (val === '11_web') {
+        document.getElementById('req-query').value = "What were the key takeaways from the July 2026 FOMC meeting?";
+        document.getElementById('tool-web').checked = true;
+        switchTab('inspector');
+        resetStream();
+        document.getElementById('grounding-panel').classList.remove('hidden');
+      } else if (val === '13_image') {
+        document.getElementById('req-query').value = "Generate an image of a simple ascending bar chart.";
+        document.getElementById('tool-image').checked = true;
+        switchTab('inspector');
+        resetStream();
+        document.getElementById('media-panel').classList.remove('hidden');
+      } else if (val === '19_skip') {
+        document.getElementById('req-query').value = "hello";
+        document.getElementById('req-force-assist').checked = true;
+        switchTab('builder');
+      } else if (val === '26_route') {
+        switchTab('routing');
+      }
+      syncCode();
+    }
+
+    // Routing Diagnosis Sim
+    function runRoutingDiagnosis() {
+      const banner = document.getElementById('routing-verdict-banner');
+      banner.className = 'p-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-between';
+      banner.innerHTML = `
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">✅</span>
+          <div>
+            <div class="font-bold text-sm text-emerald-600 dark:text-emerald-400">VERDICT: Successfully Routed to Agent Function</div>
+            <div class="text-xs text-[var(--muted-foreground)]">Found functionCall <code class="mono font-semibold text-[var(--foreground)]">'selfawareness_agent'</code> in planner step 2. Pinned agent answered.</div>
+          </div>
+        </div>
+        <span class="px-2.5 py-1 rounded text-xs font-mono bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold">ROUTED</span>
+      `;
+    }
+
+    // Smoke Suite Simulation
+    function runSmokeSuite() {
+      const btn = document.getElementById('run-smoke-btn');
+      btn.disabled = true;
+      btn.textContent = "Running Smoke Checks...";
+      document.getElementById('smoke-summary').textContent = "Running...";
+
+      const rows = document.querySelectorAll('#smoke-test-list > div');
+      let current = 0;
+      let pass = 0;
+
+      const interval = setInterval(() => {
+        if (current < rows.length) {
+          const row = rows[current];
+          const pill = row.querySelector('.test-status-pill');
+          const lat = row.querySelector('.test-latency');
+          
+          pill.textContent = "PASS";
+          pill.className = "test-status-pill px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold";
+          lat.textContent = (200 + Math.floor(Math.random() * 250)) + " ms";
+          
+          pass++;
+          document.getElementById('smoke-pass-count').textContent = pass;
+          current++;
+        } else {
+          clearInterval(interval);
+          btn.disabled = false;
+          btn.textContent = "Re-run Smoke Suite ▶";
+          document.getElementById('smoke-summary').textContent = "12 / 12 PASS";
+          document.getElementById('smoke-summary').className = "text-2xl font-bold text-emerald-500 mt-1";
+        }
+      }, 300);
+    }
+
+    // Studio Help / Documentation Navigation
+    function navigateToStudioDocs() {
+      switchTab('docs');
+      selectDocChapter('00_studio');
+    }
+
+    function selectDocChapter(id) {
+      const c00 = document.getElementById('doc-content-00');
+      const c01 = document.getElementById('doc-content-01');
+      const btn00 = document.getElementById('doc-chap-00');
+      const btn01 = document.getElementById('doc-chap-01');
+
+      if (id === '00_studio') {
+        if (c00) c00.classList.remove('hidden');
+        if (c01) c01.classList.add('hidden');
+        if (btn00) btn00.className = "p-2 rounded bg-purple-500/20 text-purple-600 dark:text-purple-300 font-semibold text-xs flex justify-between cursor-pointer border border-purple-500/30";
+        if (btn01) btn01.className = "p-2 rounded hover:bg-[var(--background)] text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex justify-between cursor-pointer";
+      } else {
+        if (c00) c00.classList.add('hidden');
+        if (c01) c01.classList.remove('hidden');
+        if (btn01) btn01.className = "p-2 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium text-xs flex justify-between cursor-pointer";
+        if (btn00) btn00.className = "p-2 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 font-medium text-xs flex justify-between cursor-pointer border border-purple-500/20";
+      }
+    }
+
+    // Initial code sync on load
+    syncCode();
+  </script>
+</body>
+</html>

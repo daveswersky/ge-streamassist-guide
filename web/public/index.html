@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gemini StreamAssist Studio</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'var(--background)',
+            foreground: 'var(--foreground)',
+            card: 'var(--card)',
+            'card-foreground': 'var(--card-foreground)',
+            border: 'var(--border)',
+            muted: 'var(--muted)',
+            'muted-foreground': 'var(--muted-foreground)',
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] min-h-screen flex flex-col antialiased selection:bg-blue-500/20">
+
+  <!-- ================= TOP HEADER ================= -->
+  <header class="h-14 border-b border-[var(--border)] bg-[var(--card)] px-6 flex items-center justify-between sticky top-0 z-50 shadow-sm">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-blue-500/20">
+        ⚡
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-bold text-sm tracking-tight">Gemini StreamAssist Studio</span>
+          <span class="px-2 py-0.5 text-[10px] rounded font-mono bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold border border-blue-500/20">v1alpha</span>
+        </div>
+        <p class="text-[11px] text-[var(--muted-foreground)]">Interactive Explorer & Simulator for Discovery Engine</p>
+      </div>
+    </div>
+
+    <!-- Mode Selector & Controls -->
+    <div class="flex items-center space-x-3">
+      <!-- Mode Toggle Switcher -->
+      <div class="flex items-center p-0.5 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+        <button id="mode-sim" onclick="setMode('sim')" class="px-3 py-1 rounded-md text-xs font-medium transition-all bg-[var(--card)] text-[var(--foreground)] shadow-xs">
+          Offline Simulator
+        </button>
+        <button id="mode-live" onclick="setMode('live')" class="px-3 py-1 rounded-md text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+          Live Cloud Runner <span class="opacity-75 text-[10px]">(.env)</span>
+        </button>
+      </div>
+
+      <!-- Connection Status Pill -->
+      <div id="env-pill" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="text-xs font-mono text-[var(--muted-foreground)]">Simulated: <strong class="text-[var(--foreground)]" id="fixture-count-pill">18 Payloads Ready</strong></span>
+      </div>
+
+      <!-- Help / Studio Guide Button -->
+      <button onclick="navigateToStudioDocs()" title="Studio Guide & Help" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)] hover:bg-[var(--card)] text-xs font-medium text-[var(--foreground)] transition-colors shadow-xs cursor-pointer">
+        <span class="w-4 h-4 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-[10px]">?</span>
+        <span>Help</span>
+      </button>
+
+      <!-- Theme Switcher -->
+      <button onclick="toggleTheme()" class="p-2 rounded-lg border border-[var(--border)] bg-[var(--background)] hover:bg-[var(--card)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
+        <span id="theme-icon">🌙</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= MAIN LAYOUT ================= -->
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="w-64 border-r border-[var(--border)] bg-[var(--card)] flex flex-col justify-between p-3 select-none">
+      <div class="space-y-6 overflow-y-auto">
+        <!-- Navigation Modules: Reordered with Chat Simulator below Documentation -->
+        <div class="space-y-1">
+          <div class="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+            Functional Areas
+          </div>
+          <nav class="space-y-0.5">
+            <button onclick="switchTab('docs')" id="nav-docs" class="nav-item w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <span>📖</span> <span>Documentation</span>
+            </button>
+            <button onclick="switchTab('simulator')" id="nav-simulator" class="nav-item w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors text-[var(--muted-foreground)] hover:bg-[var(--background)] hover:text-[var(--foreground)]">
+              <span>🛠️</span> <span>Chat Simulator</span>
+            </button>
+            <button onclick="switchTab('inspector')" id="nav-inspector" class="nav-item w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors text-[var(--muted-foreground)] hover:bg-[var(--background)] hover:text-[var(--foreground)]">
+              <span>🔬</span> <span>Wire Stream Inspector</span>
+            </button>
+            <button onclick="switchTab('routing')" id="nav-routing" class="nav-item w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors text-[var(--muted-foreground)] hover:bg-[var(--background)] hover:text-[var(--foreground)]">
+              <span>🧪</span> <span>Agent Routing Diagnostic</span>
+            </button>
+            <button onclick="switchTab('sessions')" id="nav-sessions" class="nav-item w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors text-[var(--muted-foreground)] hover:bg-[var(--background)] hover:text-[var(--foreground)]">
+              <span>📁</span> <span>Sessions & Files</span>
+            </button>
+            <button onclick="switchTab('research')" id="nav-research" class="nav-item w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors text-[var(--muted-foreground)] hover:bg-[var(--background)] hover:text-[var(--foreground)]">
+              <span>🔍</span> <span>Deep Research Flow</span>
+            </button>
+            <button onclick="switchTab('testsuites')" id="nav-testsuites" class="nav-item w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors text-[var(--muted-foreground)] hover:bg-[var(--background)] hover:text-[var(--foreground)]">
+              <span>📊</span> <span>Test Suites</span>
+            </button>
+          </nav>
+        </div>
+
+        <!-- Sample Presets -->
+        <div class="space-y-1.5">
+          <div class="px-3 py-1 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+            <span>Sample Presets</span>
+            <span class="text-[10px] font-mono opacity-75">27 items</span>
+          </div>
+          <div class="space-y-0.5 text-xs" id="presets-list">
+            <button onclick="loadPreset('01')" class="preset-btn w-full text-left px-3 py-1.5 rounded-md hover:bg-[var(--background)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex justify-between">
+              <span>01. Basic Stream Assist</span> <span class="text-[10px] opacity-60">curl</span>
+            </button>
+            <button onclick="loadPreset('04')" class="preset-btn w-full text-left px-3 py-1.5 rounded-md hover:bg-[var(--background)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex justify-between">
+              <span>04. Multi-Turn Session</span> <span class="text-[10px] opacity-60">session</span>
+            </button>
+            <button onclick="loadPreset('08')" class="preset-btn w-full text-left px-3 py-1.5 rounded-md hover:bg-[var(--background)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex justify-between">
+              <span>08. Invoke ADK Agent</span> <span class="text-[10px] text-blue-500 font-semibold">agent</span>
+            </button>
+            <button onclick="loadPreset('09')" class="preset-btn w-full text-left px-3 py-1.5 rounded-md hover:bg-[var(--background)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex justify-between">
+              <span>09. Deep Research Plan</span> <span class="text-[10px] text-purple-500 font-semibold">plan</span>
+            </button>
+            <button onclick="loadPreset('10')" class="preset-btn w-full text-left px-3 py-1.5 rounded-md hover:bg-[var(--background)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex justify-between">
+              <span>10. Deep Research Exec</span> <span class="text-[10px] text-purple-500 font-semibold">exec</span>
+            </button>
+            <button onclick="loadPreset('11')" class="preset-btn w-full text-left px-3 py-1.5 rounded-md hover:bg-[var(--background)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex justify-between">
+              <span>11. Web Grounding</span> <span class="text-[10px] opacity-60">tools</span>
+            </button>
+            <button onclick="loadPreset('13')" class="preset-btn w-full text-left px-3 py-1.5 rounded-md hover:bg-[var(--background)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex justify-between">
+              <span>13. Image Generation</span> <span class="text-[10px] opacity-60">media</span>
+            </button>
+            <button onclick="loadPreset('14')" class="preset-btn w-full text-left px-3 py-1.5 rounded-md hover:bg-[var(--background)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex justify-between">
+              <span>14. Video Generation</span> <span class="text-[10px] opacity-60">media</span>
+            </button>
+            <button onclick="loadPreset('15')" class="preset-btn w-full text-left px-3 py-1.5 rounded-md hover:bg-[var(--background)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex justify-between">
+              <span>15. Upload File</span> <span class="text-[10px] opacity-60">files</span>
+            </button>
+            <button onclick="loadPreset('16')" class="preset-btn w-full text-left px-3 py-1.5 rounded-md hover:bg-[var(--background)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex justify-between">
+              <span>16. Query with Files</span> <span class="text-[10px] opacity-60">files</span>
+            </button>
+            <button onclick="loadPreset('19')" class="preset-btn w-full text-left px-3 py-1.5 rounded-md hover:bg-[var(--background)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex justify-between">
+              <span>19. Chit-Chat Skip</span> <span class="text-[10px] text-amber-500 font-semibold">#4</span>
+            </button>
+            <button onclick="loadPreset('24')" class="preset-btn w-full text-left px-3 py-1.5 rounded-md hover:bg-[var(--background)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex justify-between">
+              <span>24. Native A2A Stream</span> <span class="text-[10px] text-indigo-500 font-semibold">a2a</span>
+            </button>
+            <button onclick="loadPreset('26')" class="preset-btn w-full text-left px-3 py-1.5 rounded-md hover:bg-[var(--background)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex justify-between">
+              <span>26. Diagnose Routing</span> <span class="text-[10px] text-emerald-500 font-semibold">diag</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Info -->
+      <div class="pt-3 border-t border-[var(--border)] text-[11px] text-[var(--muted-foreground)] flex items-center justify-between">
+        <span>Google Gemini Enterprise</span>
+        <span class="font-mono text-[10px]">offline-ok</span>
+      </div>
+    </aside>
+
+    <!-- MAIN VIEW AREA -->
+    <main class="flex-1 overflow-y-auto p-6 bg-[var(--background)] relative">
+
+      <!-- ================= TAB 1: DOCUMENTATION ================= -->
+      <section id="view-docs" class="tab-view space-y-5">
+        <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+          <div>
+            <h2 class="text-lg font-bold tracking-tight">Documentation</h2>
+            <p class="text-xs text-[var(--muted-foreground)]">Complete developer guide, API references, architecture diagrams, and 34 verified gotchas.</p>
+          </div>
+          <div class="flex gap-2">
+            <input id="doc-search" oninput="filterDocs()" type="text" placeholder="Search docs & gotchas..." class="bg-[var(--card)] border border-[var(--border)] rounded-md px-3 py-1.5 text-xs w-64 focus:outline-none focus:ring-1 focus:ring-blue-500">
+            <button onclick="showGlossaryModal()" class="bg-[var(--card)] hover:bg-[var(--border)] border border-[var(--border)] px-3 py-1.5 rounded-md text-xs font-medium transition-colors">Quick Glossary</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-5">
+          <!-- Chapter List (3 cols / 25%) -->
+          <div class="col-span-3 space-y-2">
+            <div class="text-xs font-semibold uppercase text-[var(--muted-foreground)] tracking-wider">Chapters</div>
+            <div id="chapters-nav-list" class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-2 space-y-1 max-h-[640px] overflow-y-auto">
+              <!-- Populated dynamically via app.js -->
+            </div>
+          </div>
+
+          <!-- Chapter Content Preview (9 cols / 75%) -->
+          <div class="col-span-9 space-y-4">
+            <div id="doc-reading-card" class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-6 space-y-4 min-h-[500px]">
+              <!-- Rendered markdown content with table support -->
+              <div id="doc-content-body" class="markdown-body">
+                <div class="text-xs text-[var(--muted-foreground)] animate-pulse">Loading chapter...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 2: CHAT SIMULATOR (GEMINI ENTERPRISE CHAT INTERFACE) ================= -->
+      <section id="view-simulator" class="tab-view hidden space-y-4 relative">
+        <!-- Top Chat Header Bar with Drawer Toggle -->
+        <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm">✦</span>
+              <h2 class="text-base font-bold tracking-tight">Gemini Enterprise Assistant</h2>
+              <span class="px-2 py-0.5 text-[10px] rounded font-mono bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold border border-blue-500/20">Chat Simulator</span>
+            </div>
+            <p class="text-xs text-[var(--muted-foreground)] mt-0.5">
+              <span class="text-amber-500 font-medium">Simulator Mode:</span> Fixed input & verified output replay. (Switch to <strong class="text-[var(--foreground)]">Live Cloud Runner</strong> in top bar to execute real API requests).
+            </p>
+          </div>
+          <!-- Accordion Toggle Button for Code Exporter -->
+          <button id="toggle-drawer-btn" onclick="toggleCodeDrawer()" class="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--border)] text-xs font-medium text-[var(--foreground)] flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer">
+            <span class="font-mono text-[11px] text-blue-500">&lt;/&gt;</span>
+            <span id="drawer-btn-label">Code Exporter & Spec</span>
+            <span id="drawer-chevron">◀</span>
+          </button>
+        </div>
+
+        <!-- Chat Container and Slide-out Drawer Flex Wrapper -->
+        <div class="flex gap-4 relative items-start">
+
+          <!-- Main Gemini Chat Window (Full Width or Flex-1) -->
+          <div class="flex-1 bg-[var(--card)] border border-[var(--border)] rounded-xl flex flex-col h-[650px] shadow-xs overflow-hidden">
+            
+            <!-- 1. SHORT SLIM WELCOME BANNER (AT TOP) -->
+            <div class="p-3 bg-blue-500/10 border-b border-[var(--border)] flex flex-wrap items-center justify-between gap-2 text-xs shrink-0">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white text-[11px] font-bold shrink-0 shadow-xs">✦</span>
+                <span class="font-semibold text-[var(--foreground)]">Gemini Enterprise Assistant</span>
+                <span class="text-[var(--muted-foreground)] text-[11px] hidden sm:inline">— Offline Simulator replaying verified payloads from <code class="mono text-[10px]">outputs/</code></span>
+              </div>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-[10px] text-[var(--muted-foreground)] uppercase font-semibold tracking-wider">Try:</span>
+                <button onclick="applyPromptChip('Explain dollar-cost averaging in volatile equity markets.', '01')" class="px-2 py-0.5 rounded-full border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--muted)] text-[10px] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors cursor-pointer">
+                  💡 01. Dollar-cost
+                </button>
+                <button onclick="applyPromptChip('My name is Jordan and I work in fixed income. Remember that.', '04')" class="px-2 py-0.5 rounded-full border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--muted)] text-[10px] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors cursor-pointer">
+                  🔄 04. Multi-turn
+                </button>
+                <button onclick="applyPromptChip('Who are you and what tools do you have access to?', '08', 'selfawareness_agent')" class="px-2 py-0.5 rounded-full border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--muted)] text-[10px] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors cursor-pointer">
+                  🤖 08. ADK Agent
+                </button>
+                <button onclick="applyPromptChip('hi', '19', 'selfawareness_agent')" class="px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 text-[10px] text-amber-600 dark:text-amber-400 transition-colors cursor-pointer">
+                  ⚠️ 19. Chit-chat (#4)
+                </button>
+              </div>
+            </div>
+
+            <!-- 2. CHAT INPUT AREA (MOVED UP DIRECTLY BELOW BANNER) -->
+            <div class="border-b border-[var(--border)] bg-[var(--background)] p-3.5 space-y-2.5 shrink-0">
+              <div class="relative bg-black border border-neutral-800 rounded-xl p-3 shadow-inner focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500">
+                <textarea id="req-query" rows="2" oninput="syncCode()" placeholder="Ask Gemini Enterprise... (or pick a preset from the sidebar)" class="w-full bg-black text-white text-xs font-sans resize-none focus:outline-none leading-relaxed placeholder:text-neutral-500">Explain dollar-cost averaging in volatile equity markets.</textarea>
+                
+                <!-- Preset & Agent Parameters -->
+                <div class="flex items-center gap-3 pt-2 border-t border-neutral-800 text-xs mt-1">
+                  <div class="flex items-center gap-1.5 text-[11px] text-neutral-400">
+                    <span>Preset:</span>
+                    <select id="chat-preset-select" onchange="loadPreset(this.value)" class="bg-neutral-900 border border-neutral-700 text-neutral-200 rounded px-1.5 py-0.5 text-[11px] font-mono">
+                      <option value="01">01. Basic Stream Assist</option>
+                      <option value="04">04. Multi-Turn Session</option>
+                      <option value="08">08. Invoke ADK Agent</option>
+                      <option value="11">11. Web Grounding</option>
+                      <option value="13">13. Image Gen</option>
+                      <option value="14">14. Video Gen</option>
+                      <option value="16">16. Query with Files</option>
+                      <option value="19">19. Chit-Chat Skip (#4)</option>
+                      <option value="24">24. Native A2A</option>
+                    </select>
+                  </div>
+
+                  <div class="flex items-center gap-1.5 text-[11px] text-neutral-400">
+                    <span>Agent:</span>
+                    <input id="req-agent" type="text" placeholder="(optional)" oninput="syncCode()" class="bg-neutral-900 border border-neutral-700 text-neutral-200 rounded px-1.5 py-0.5 text-[11px] font-mono w-36 placeholder:text-neutral-600">
+                  </div>
+                </div>
+
+                <!-- SEND REQUEST BUTTON & ROUTING STATUS CHIP (BELOW PRESET AND AGENT) -->
+                <div class="flex items-center justify-between pt-2 border-t border-neutral-800/60 mt-1.5">
+                  <div id="chat-routing-status-chip" onclick="toggleChatRoutingAccordion(true)" class="flex items-center gap-1.5 text-[11px] text-neutral-400 hover:text-white cursor-pointer transition-colors px-2 py-0.5 rounded bg-neutral-900 border border-neutral-800" title="Click to view routing diagnostic steps">
+                    <span id="chat-routing-chip-dot" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span id="chat-routing-chip-label" class="font-mono text-[10px]">Routing: Standby</span>
+                  </div>
+                  <button id="send-chat-btn" onclick="sendChatQuery()" class="px-5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer">
+                    <span id="send-btn-icon">▶</span>
+                    <span id="send-btn-label">Send Request</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quick Info / Wire Link -->
+              <div class="flex items-center justify-between text-[11px] text-[var(--muted-foreground)] px-1">
+                <span>💡 Simulator replaying verified response payloads. Click <button onclick="switchTab('inspector')" class="text-blue-500 hover:underline">Wire Stream Inspector</button> for raw frame-level bytes.</span>
+                <span class="font-mono text-[10px]">streamAssist: v1alpha</span>
+              </div>
+            </div>
+
+            <!-- COLLAPSIBLE ACCORDION: AGENT ROUTING DIAGNOSTIC (BETWEEN CHAT FRAME & CONVERSATION STREAM) -->
+            <div id="chat-routing-accordion" class="border-y border-[var(--border)] bg-[var(--background)] shrink-0 transition-all">
+              <!-- Collapsed Header -->
+              <div onclick="toggleChatRoutingAccordion()" class="px-4 py-2 flex items-center justify-between cursor-pointer hover:bg-[var(--card)] transition-colors select-none">
+                <div class="flex items-center gap-2.5 overflow-hidden">
+                  <span class="text-xs text-amber-500 shrink-0">⚡</span>
+                  <span class="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)] shrink-0">Agent Routing</span>
+                  <span id="chat-routing-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold shrink-0 bg-neutral-500/10 text-neutral-400 border border-neutral-500/20">STANDBY</span>
+                  <span id="chat-routing-summary" class="text-xs text-[var(--muted-foreground)] truncate">Orchestrator ready. Awaiting request...</span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <span class="text-[10px] text-[var(--muted-foreground)] hidden sm:inline">Click to expand</span>
+                  <span id="chat-routing-chevron" class="text-xs text-[var(--muted-foreground)] transition-transform font-mono">▼</span>
+                </div>
+              </div>
+
+              <!-- Expanded Step Information -->
+              <div id="chat-routing-body" class="hidden px-4 pb-3.5 pt-1 space-y-3 max-h-64 overflow-y-auto border-t border-[var(--border)]/50 bg-[var(--card)]/50">
+                <div class="flex items-center justify-between pt-1">
+                  <div class="text-[11px] font-semibold text-[var(--muted-foreground)] uppercase tracking-wider flex items-center gap-1.5">
+                    <span>Planner Steps Execution Tree</span>
+                    <span id="chat-routing-step-count" class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-500 font-normal">3 steps</span>
+                  </div>
+                  <button onclick="switchTab('routing')" class="text-[11px] text-blue-500 hover:underline flex items-center gap-1 font-medium cursor-pointer">
+                    <span>Inspect in Dedicated Tab 4</span>
+                    <span>↗</span>
+                  </button>
+                </div>
+
+                <!-- Dynamic Steps Container in Chat Frame -->
+                <div id="chat-routing-steps-container" class="space-y-2">
+                  <!-- Injected dynamically via app.js -->
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. CHAT MESSAGES & STREAMING CONVERSATION SCROLL AREA -->
+            <div class="px-4 py-2 bg-[var(--card)]/40 border-b border-[var(--border)] flex items-center justify-between text-xs text-[var(--muted-foreground)] shrink-0">
+              <div class="flex items-center gap-1.5 font-medium text-[11px]">
+                <span>💬</span>
+                <span>Response Stream & Turns</span>
+              </div>
+              <!-- Reset Button for Response Pane -->
+              <button id="reset-chat-btn" onclick="resetChatThread()" class="px-2 py-0.5 rounded bg-[var(--background)] hover:bg-[var(--border)] border border-[var(--border)] text-[10px] text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex items-center gap-1 transition-colors cursor-pointer" title="Reset responses and clear conversation thread">
+                <span>↺</span>
+                <span>Reset Responses</span>
+              </button>
+            </div>
+            <div id="chat-messages-container" class="flex-1 overflow-y-auto p-4 space-y-4">
+              <div id="chat-thread" class="space-y-4">
+                <div id="empty-thread-hint" class="flex flex-col items-center justify-center py-12 text-center text-xs text-[var(--muted-foreground)] space-y-2">
+                  <span class="w-10 h-10 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center text-lg">💬</span>
+                  <p class="font-medium text-[var(--foreground)]">Ready to stream responses</p>
+                  <p class="max-w-md text-[11px]">Click <strong class="text-blue-500">Send Request ▶</strong> above or pick a sample preset to begin streaming verified chunks from Gemini Enterprise.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slide-out Right Accordion Drawer (Code Exporter & Request Spec) -->
+          <div id="code-drawer" class="w-96 bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 flex flex-col h-[650px] shadow-lg shrink-0 overflow-y-auto space-y-4">
+            <div class="flex items-center justify-between border-b border-[var(--border)] pb-2">
+              <div class="flex items-center gap-1.5">
+                <span class="text-blue-500 font-mono text-xs font-bold">&lt;/&gt;</span>
+                <span class="text-xs font-bold uppercase tracking-wider">Code & Spec Exporter</span>
+              </div>
+              <button onclick="toggleCodeDrawer()" class="text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 rounded">✕</button>
+            </div>
+
+            <!-- Code Language Tabs -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-[11px] text-[var(--muted-foreground)]">
+                <span>Language Syntax</span>
+                <button onclick="copyGeneratedCode()" class="text-blue-500 hover:underline text-[10px]">Copy Code</button>
+              </div>
+              <div class="flex border border-[var(--border)] rounded overflow-hidden text-xs">
+                <button onclick="setLangTab('curl')" id="tab-curl" class="flex-1 py-1 bg-blue-500 text-white font-mono text-[10px] text-center">cURL</button>
+                <button onclick="setLangTab('python')" id="tab-python" class="flex-1 py-1 bg-[var(--background)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] font-mono text-[10px] text-center">Python</button>
+                <button onclick="setLangTab('node')" id="tab-node" class="flex-1 py-1 bg-[var(--background)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] font-mono text-[10px] text-center">Node</button>
+                <button onclick="setLangTab('json')" id="tab-json" class="flex-1 py-1 bg-[var(--background)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] font-mono text-[10px] text-center">JSON</button>
+              </div>
+            </div>
+
+            <!-- Code Output Display -->
+            <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-3 font-mono text-[11px] h-48 overflow-y-auto">
+              <pre id="code-output" class="text-blue-600 dark:text-blue-400 font-mono whitespace-pre-wrap leading-relaxed">// Generating code...</pre>
+            </div>
+
+            <!-- Advanced Request Spec Configurator -->
+            <div class="space-y-3 pt-2 border-t border-[var(--border)] text-xs">
+              <div class="font-semibold text-[11px] uppercase tracking-wider text-[var(--muted-foreground)]">Request Schema Parameters</div>
+
+              <!-- Session -->
+              <div class="space-y-1">
+                <label class="text-[11px] font-medium">Session ID (<code class="mono text-[10px]">session</code>)</label>
+                <input id="req-session" type="text" value="-" oninput="syncCode()" class="w-full bg-[var(--background)] border border-[var(--border)] rounded px-2 py-1 text-xs font-mono">
+              </div>
+
+              <!-- Tool Toggles -->
+              <div class="space-y-1.5">
+                <label class="text-[11px] font-medium">Tools Configurator (<code class="mono text-[10px]">toolsSpec</code>)</label>
+                <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+                  <label class="flex items-center space-x-1.5 cursor-pointer">
+                    <input id="tool-web" type="checkbox" onchange="syncCode()" class="rounded text-blue-600">
+                    <span>Web Grounding</span>
+                  </label>
+                  <label class="flex items-center space-x-1.5 cursor-pointer">
+                    <input id="tool-datastore" type="checkbox" onchange="syncCode()" class="rounded text-blue-600">
+                    <span>Datastore RAG</span>
+                  </label>
+                  <label class="flex items-center space-x-1.5 cursor-pointer">
+                    <input id="tool-image" type="checkbox" onchange="syncCode()" class="rounded text-blue-600">
+                    <span>Image Gen</span>
+                  </label>
+                  <label class="flex items-center space-x-1.5 cursor-pointer">
+                    <input id="tool-video" type="checkbox" onchange="syncCode()" class="rounded text-blue-600">
+                    <span>Video Gen</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Chit-Chat Skipping Mode -->
+              <div class="space-y-1">
+                <div class="flex items-center justify-between">
+                  <label class="text-[11px] font-medium">Classifier Skip (<code class="mono text-[10px]">assistSkippingMode</code>)</label>
+                  <span class="text-[10px] text-amber-500 font-medium">Gotcha #4</span>
+                </div>
+                <select id="req-skipping-mode" onchange="syncCode()" class="w-full bg-[var(--background)] border border-[var(--border)] rounded px-2 py-1 text-xs">
+                  <option value="DEFAULT">DEFAULT (Greetings get SKIPPED)</option>
+                  <option value="REQUEST_ASSIST">REQUEST_ASSIST (Force routing)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================= TAB 3: WIRE STREAM INSPECTOR ================= -->
+      <section id="view-inspector" class="tab-view hidden space-y-4">
+        <!-- Explanatory Header Banner -->
+        <div class="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 text-xs flex items-center justify-between">
+          <div>
+            <strong class="text-blue-600 dark:text-blue-400">Wire Protocol Inspection:</strong>
+            <span class="text-[var(--muted-foreground)] ml-1">Gemini Enterprise transmits a chunked JSON array stream (<code class="mono text-[11px]">[ {chunk} , {chunk} ]</code>) over HTTP transfer. This inspector demonstrates boundary decoding, thought fragment demuxing (<code class="mono text-[10px]">content.thought: true</code>), and citations extraction.</span>
+          </div>
+        </div>
+
+        <!-- NEW: Input Fixture Source Window Directly Above Raw Wire Buffer -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-3.5 space-y-2.5 shadow-xs">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-600 dark:text-blue-400 font-mono uppercase tracking-wider">Input Source</span>
+              <span class="text-xs font-semibold">Captured Wire Fixture (outputs/*.json)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] text-[var(--muted-foreground)]">Select Input Payload:</span>
+              <select id="wire-fixture-select" onchange="changeWireFixture(this.value)" class="bg-[var(--background)] border border-[var(--border)] rounded-md px-2.5 py-1 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <!-- Populated dynamically via app.js -->
+              </select>
+            </div>
+          </div>
+          
+          <!-- Fixture Info Bar -->
+          <div class="bg-[var(--background)] rounded-md border border-[var(--border)] p-2.5 flex items-center justify-between text-xs font-mono">
+            <div class="flex items-center gap-4">
+              <div>File: <strong class="text-blue-500" id="fixture-filename-display">outputs/01-basic-stream-assist.json</strong></div>
+              <div class="text-[var(--muted-foreground)]">|</div>
+              <div>Size: <span id="fixture-size-display" class="text-[var(--muted-foreground)]">7.2 KB</span></div>
+              <div class="text-[var(--muted-foreground)]">|</div>
+              <div>Chunks: <span id="fixture-chunks-display" class="text-[var(--muted-foreground)]">5 frames</span></div>
+            </div>
+            <button onclick="toggleInputPreview()" class="text-[11px] text-blue-500 hover:underline cursor-pointer">
+              <span id="preview-toggle-text">Show Static Input Payload ▼</span>
+            </button>
+          </div>
+
+          <!-- Collapsible Static Input Payload Preview -->
+          <div id="fixture-preview-drawer" class="hidden bg-[var(--background)] border border-[var(--border)] rounded-md p-2.5 max-h-48 overflow-y-auto">
+            <pre id="fixture-raw-preview" class="text-[11px] font-mono text-[var(--muted-foreground)] whitespace-pre-wrap"></pre>
+          </div>
+        </div>
+
+        <!-- Inspector Controls Bar -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-3 flex items-center justify-between shadow-xs">
+          <div class="flex items-center space-x-3">
+            <button id="stream-play-btn" onclick="toggleStreamSimulation()" class="px-4 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs flex items-center gap-1.5 shadow-xs transition-all cursor-pointer">
+              <span id="play-icon">▶</span> <span id="play-text">Replay Stream</span>
+            </button>
+            <button onclick="stepChunk()" class="px-3 py-1.5 rounded-md bg-[var(--background)] hover:bg-[var(--border)] border border-[var(--border)] text-xs font-medium cursor-pointer">
+              Next Chunk ⏭
+            </button>
+            <button onclick="resetStream()" class="px-3 py-1.5 rounded-md bg-[var(--background)] hover:bg-[var(--border)] border border-[var(--border)] text-xs font-medium cursor-pointer">
+              Reset ↺
+            </button>
+            <div class="h-5 w-[1px] bg-[var(--border)]"></div>
+            <span class="text-xs text-[var(--muted-foreground)]">Chunk: <strong id="chunk-counter" class="text-[var(--foreground)] font-mono">5 / 5</strong></span>
+            <span class="text-xs text-[var(--muted-foreground)]">State: <span id="stream-state-badge" class="px-2 py-0.5 text-[10px] rounded font-mono bg-emerald-500/10 text-emerald-500 font-semibold">SUCCEEDED</span></span>
+          </div>
+
+          <div class="flex items-center space-x-3 text-xs">
+            <span class="text-[var(--muted-foreground)]">Speed:</span>
+            <div class="flex border border-[var(--border)] rounded overflow-hidden">
+              <button onclick="setStreamSpeed('1x')" id="speed-1x" class="px-2 py-1 bg-blue-500 text-white font-mono text-[10px]">1x</button>
+              <button onclick="setStreamSpeed('2x')" id="speed-2x" class="px-2 py-1 bg-[var(--background)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] font-mono text-[10px]">2x</button>
+              <button onclick="setStreamSpeed('instant')" id="speed-instant" class="px-2 py-1 bg-[var(--background)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] font-mono text-[10px]">Instant</button>
+            </div>
+            <button onclick="triggerSimulatedError()" class="px-2.5 py-1 text-[10px] rounded border border-red-500/30 text-red-500 hover:bg-red-500/10 cursor-pointer">
+              Simulate Gotcha #9 Error
+            </button>
+          </div>
+        </div>
+
+        <!-- Split-Screen Wire View (Pre-populated by default with 01-basic-stream-assist.json) -->
+        <div class="grid grid-cols-12 gap-5">
+          <!-- Left Pane: Raw Wire Chunks -->
+          <div class="col-span-6 space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="text-xs font-semibold uppercase text-[var(--muted-foreground)] tracking-wider flex items-center gap-2">
+                <span>Raw Wire Buffer</span>
+                <span class="px-1.5 py-0.2 rounded text-[10px] bg-blue-500/10 text-blue-500 font-mono">JSON Array Stream</span>
+              </div>
+              <span class="text-[11px] text-[var(--muted-foreground)] font-mono" id="wire-fixture-name">outputs/01-basic-stream-assist.json</span>
+            </div>
+            <div class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-3 font-mono text-xs h-[520px] overflow-y-auto flex flex-col justify-between" id="wire-scroll-container">
+              <pre id="raw-wire-display" class="text-xs text-blue-600 dark:text-blue-400 font-mono whitespace-pre-wrap leading-relaxed">[
+  // Loading default fixture...
+]</pre>
+            </div>
+          </div>
+
+          <!-- Right Pane: Assembled Stream Output -->
+          <div class="col-span-6 space-y-4">
+            <div class="text-xs font-semibold uppercase text-[var(--muted-foreground)] tracking-wider">
+              Assembled Answer & Demuxed Streams
+            </div>
+
+            <!-- Assembled Markdown View -->
+            <div class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-5 space-y-4 min-h-[260px]">
+              <div class="flex items-center justify-between border-b border-[var(--border)] pb-2 text-xs">
+                <span class="font-semibold text-[var(--foreground)]">Answer Stream (<code class="mono text-[10px]">content.text</code>)</span>
+                <span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono" id="answer-state-pill">READY</span>
+              </div>
+              <div id="assembled-answer-text" class="markdown-body text-xs leading-relaxed min-h-[120px]">
+                <p class="text-[var(--muted-foreground)] italic">Awaiting streamed chunks...</p>
+              </div>
+            </div>
+
+            <!-- Demuxed Thought Accordion -->
+            <div id="thought-accordion" class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 space-y-2">
+              <div onclick="toggleThoughtPane()" class="flex items-center justify-between cursor-pointer select-none">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-semibold text-purple-600 dark:text-purple-400">🧠 Thought Stream (<code class="mono text-[10px]">thought: true</code>)</span>
+                  <span id="thought-counter-badge" class="px-1.5 py-0.2 rounded text-[10px] bg-purple-500/10 text-purple-600 dark:text-purple-400 font-mono">0 fragments</span>
+                </div>
+                <span id="thought-chevron" class="text-xs text-[var(--muted-foreground)]">▼</span>
+              </div>
+              <div id="thought-body" class="text-xs font-mono text-[var(--muted-foreground)] bg-[var(--background)] p-3 rounded border border-[var(--border)] hidden space-y-1">
+                No thought fragments in this response.
+              </div>
+            </div>
+
+            <!-- Grounding & References -->
+            <div class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 space-y-2">
+              <div class="flex items-center justify-between text-xs font-semibold">
+                <span>Grounding & Citations (<code class="mono text-[10px]">textGroundingMetadata</code>)</span>
+                <span class="text-[10px] text-blue-500 font-mono" id="grounding-count">0 sources</span>
+              </div>
+              <div id="grounding-list" class="text-xs space-y-1 text-[var(--muted-foreground)]">
+                <div class="italic text-[11px]">No active grounding metadata in current stream.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 4: AGENT ROUTING DIAGNOSTIC ================= -->
+      <section id="view-routing" class="tab-view hidden space-y-5">
+        <div class="flex flex-wrap items-center justify-between border-b border-[var(--border)] pb-3 gap-3">
+          <div>
+            <h2 class="text-lg font-bold tracking-tight">Agent Routing Diagnostic</h2>
+            <p class="text-xs text-[var(--muted-foreground)]">Diagnostic lab inspecting <code class="mono text-[11px]">answer.diagnosticInfo.plannerSteps</code> to verify agent function invocation vs orchestrator fallback.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)]">
+              <span>Scenario:</span>
+              <select id="routing-scenario-select" onchange="onRoutingScenarioChange(this.value)" class="bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] rounded px-2 py-1 text-xs font-mono">
+                <option value="08">Preset 08: ADK Self-Awareness Agent (Delegated)</option>
+                <option value="24">Preset 24: Native A2A Direct (Bypass)</option>
+                <option value="01">Preset 01: Base Orchestrator Fallback (Gotcha #2)</option>
+                <option value="13">Preset 13: Image Generation Tool Spec</option>
+                <option value="19">Preset 19: Chit-Chat Skip (Gotcha #4)</option>
+              </select>
+            </div>
+            <button onclick="runRoutingDiagnosis()" class="px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-xs cursor-pointer">
+              Run Routing Check ▶
+            </button>
+          </div>
+        </div>
+
+        <!-- Diagnostic Verdict Banner -->
+        <div id="routing-verdict-banner" class="p-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">✅</span>
+            <div>
+              <div class="font-bold text-sm text-emerald-600 dark:text-emerald-400">VERDICT: Successfully Routed to Agent Function</div>
+              <div class="text-xs text-[var(--muted-foreground)]">Found functionCall <code class="mono font-semibold text-[var(--foreground)]">'selfawareness_agent'</code> in planner step 2. Pinned agent answered.</div>
+            </div>
+          </div>
+          <span class="px-2.5 py-1 rounded text-xs font-mono bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold">ROUTED</span>
+        </div>
+
+        <!-- PlannerSteps Tree Visualizer -->
+        <div class="grid grid-cols-12 gap-5">
+          <div class="col-span-7 space-y-3">
+            <div class="text-xs font-semibold uppercase text-[var(--muted-foreground)] tracking-wider">Planner Steps Execution Tree</div>
+            
+            <div class="space-y-3" id="planner-steps-container">
+              <!-- Step 1 -->
+              <div class="p-4 rounded-lg border border-[var(--border)] bg-[var(--card)] space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-semibold text-blue-500 font-mono">Step 1: queryStep</span>
+                  <span class="text-[10px] text-[var(--muted-foreground)]">Orchestrator Intake</span>
+                </div>
+                <div class="text-xs font-mono bg-[var(--background)] p-2.5 rounded border border-[var(--border)]">
+                  <div>"query": "Who are you and what tools do you have access to?"</div>
+                  <div class="text-[10px] text-[var(--muted-foreground)] pt-1">Intent: IDENTIFY_CAPABILITIES (Target: agentsSpec[0])</div>
+                </div>
+              </div>
+
+              <!-- Step 2 -->
+              <div class="p-4 rounded-lg border border-emerald-500/30 bg-[var(--card)] space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-semibold text-emerald-500 font-mono">Step 2: planStep (functionCall Delegated)</span>
+                  <span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold font-mono">SUCCESS</span>
+                </div>
+                <div class="text-xs font-mono bg-[var(--background)] p-2.5 rounded border border-[var(--border)] space-y-1">
+                  <div>"action": "functionCall"</div>
+                  <div>"function": "<strong class="text-emerald-600 dark:text-emerald-400">selfawareness_agent</strong>"</div>
+                  <div>"args": { "message": "Who are you and what tools do you have access to?" }</div>
+                </div>
+              </div>
+
+              <!-- Step 3 -->
+              <div class="p-4 rounded-lg border border-[var(--border)] bg-[var(--card)] space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-semibold text-purple-500 font-mono">Step 3: toolStep (Synthesize Answer)</span>
+                  <span class="text-[10px] text-[var(--muted-foreground)]">Model Model Response</span>
+                </div>
+                <div class="text-xs font-mono bg-[var(--background)] p-2.5 rounded border border-[var(--border)]">
+                  <div>"state": "SUCCEEDED"</div>
+                  <div class="text-[10px] text-[var(--muted-foreground)] pt-1">Grounded model reply generated from agent function output.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Diagnostic Help & Caveats -->
+          <div class="col-span-5 space-y-4">
+            <div class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-5 space-y-3">
+              <h3 class="text-xs font-semibold uppercase text-[var(--muted-foreground)] tracking-wider">Routing Rules & Gotchas</h3>
+              
+              <div class="text-xs space-y-3">
+                <div class="p-3 rounded border border-amber-500/30 bg-amber-500/5 space-y-1">
+                  <div class="font-semibold text-amber-600 dark:text-amber-400">Gotcha #2 Detection:</div>
+                  <p class="text-[var(--muted-foreground)]">If <code class="mono text-[10px]">planStep</code> contains <code class="mono text-[10px]">answer-directly</code> instead of <code class="mono text-[10px]">functionCall</code>, the orchestrator refused to delegate.</p>
+                </div>
+
+                <div class="p-3 rounded border border-blue-500/30 bg-blue-500/5 space-y-1">
+                  <div class="font-semibold text-blue-600 dark:text-blue-400">Direct A2A Alternative (Chapter 11):</div>
+                  <p class="text-[var(--muted-foreground)]">To bypass the orchestrator completely and guarantee 100% routing fidelity, use native A2A via <code class="mono text-[10px]">message:stream</code>.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 5: SESSIONS & FILES WORKSPACE ================= -->
+      <section id="view-sessions" class="tab-view hidden space-y-5">
+        <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+          <div>
+            <h2 class="text-lg font-bold tracking-tight">Sessions & Context Files Workspace</h2>
+            <p class="text-xs text-[var(--muted-foreground)]">Multi-turn session manager with queryId correlation, session file management, and guided Recipe A runner.</p>
+          </div>
+          <button onclick="startRecipeA()" class="px-3.5 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs shadow-xs cursor-pointer">
+            Run Recipe A (Doc Review Copilot) ▶
+          </button>
+        </div>
+
+        <div class="grid grid-cols-12 gap-5">
+          <!-- Session Timeline -->
+          <div class="col-span-7 space-y-3">
+            <div class="text-xs font-semibold uppercase text-[var(--muted-foreground)] tracking-wider">Multi-Turn Turns Timeline</div>
+            <div class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 space-y-4 min-h-[380px]">
+              <div class="space-y-3" id="turns-timeline">
+                <div class="p-3 rounded border border-[var(--border)] bg-[var(--background)] space-y-1">
+                  <div class="flex items-center justify-between text-xs font-semibold text-blue-500">
+                    <span>Turn 1: Initial Query</span>
+                    <span class="text-[10px] font-mono opacity-75">queryId: 12292448675473983262</span>
+                  </div>
+                  <p class="text-xs text-[var(--foreground)]">"I am planning to retire in 15 years with a 60/40 index portfolio."</p>
+                </div>
+
+                <div class="p-3 rounded border border-emerald-500/20 bg-emerald-500/5 space-y-1">
+                  <div class="flex items-center justify-between text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                    <span>Turn 2: Follow-up (Recalling Context)</span>
+                    <span class="text-[10px] font-mono opacity-75">queryId: 7460754264515114558</span>
+                  </div>
+                  <p class="text-xs text-[var(--foreground)]">"Given my retirement horizon, should I adjust this during market drawdowns?"</p>
+                  <p class="text-[11px] text-[var(--muted-foreground)] pt-1 italic">✓ Model correctly cited the 15-year horizon from Turn 1 state.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Session Files Explorer -->
+          <div class="col-span-5 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="text-xs font-semibold uppercase text-[var(--muted-foreground)] tracking-wider">Session Files (<code class="mono text-[10px]">:listSessionFileMetadata</code>)</div>
+              <span class="text-[10px] text-amber-500 font-semibold">Gotcha #17</span>
+            </div>
+            
+            <div class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 space-y-3">
+              <div class="p-3 rounded border border-[var(--border)] bg-[var(--background)] flex items-center justify-between">
+                <div class="space-y-0.5">
+                  <div class="font-medium text-xs flex items-center gap-2">
+                    <span>📄</span> <span>q3_portfolio_review.pdf</span>
+                  </div>
+                  <div class="text-[10px] text-[var(--muted-foreground)] font-mono">id: file-89240182 | 240 KB</div>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-500 font-bold">READY</span>
+              </div>
+
+              <div class="p-3 rounded border border-[var(--border)] bg-[var(--background)] flex items-center justify-between">
+                <div class="space-y-0.5">
+                  <div class="font-medium text-xs flex items-center gap-2">
+                    <span>📊</span> <span>asset_allocation_matrix.csv</span>
+                  </div>
+                  <div class="text-[10px] text-[var(--muted-foreground)] font-mono">id: file-49102812 | 45 KB</div>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-500 font-bold">READY</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 6: DEEP RESEARCH FLOW ================= -->
+      <section id="view-research" class="tab-view hidden space-y-5">
+        <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+          <div>
+            <h2 class="text-lg font-bold tracking-tight">Deep Research Flow</h2>
+            <p class="text-xs text-[var(--muted-foreground)]">Two-step protocol visualizer: Step 1 Plan formulation ➔ Step 2 Execution monitoring filtered by <code class="mono text-[11px]">contentKind</code>.</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="loadDeepResearchStep('plan')" id="btn-dr-plan" class="px-3 py-1.5 rounded-md bg-purple-600 text-white font-medium text-xs shadow-xs cursor-pointer">
+              Step 1: Plan View
+            </button>
+            <button onclick="loadDeepResearchStep('exec')" id="btn-dr-exec" class="px-3 py-1.5 rounded-md bg-[var(--card)] hover:bg-[var(--border)] border border-[var(--border)] font-medium text-xs cursor-pointer">
+              Step 2: Execution Feed
+            </button>
+          </div>
+        </div>
+
+        <!-- Deep Research Views Container -->
+        <div id="dr-plan-view" class="space-y-4">
+          <div class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-5 space-y-4">
+            <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+              <div>
+                <h3 class="text-sm font-bold text-purple-600 dark:text-purple-400">Research Plan (<code class="mono text-xs">contentKind == "RESEARCH_PLAN"</code>)</h3>
+                <p class="text-xs text-[var(--muted-foreground)]">Topic: Competitive analysis of AI-native code generation architectures (2026)</p>
+              </div>
+              <span class="px-2 py-0.5 rounded text-xs bg-purple-500/10 text-purple-600 dark:text-purple-400 font-semibold">PLAN AWAITING APPROVAL</span>
+            </div>
+
+            <div class="space-y-3 text-xs">
+              <div class="font-semibold text-[var(--foreground)]">Formulated Research Sub-Questions:</div>
+              <div class="space-y-2">
+                <div class="p-3 rounded border border-[var(--border)] bg-[var(--background)] flex items-center justify-between">
+                  <span>1. What are the dominant speculative decoding approaches in agentic coding frameworks?</span>
+                  <input type="checkbox" checked class="rounded text-purple-600">
+                </div>
+                <div class="p-3 rounded border border-[var(--border)] bg-[var(--background)] flex items-center justify-between">
+                  <span>2. How do multi-turn memory budgets impact latency in long-running IDE sessions?</span>
+                  <input type="checkbox" checked class="rounded text-purple-600">
+                </div>
+                <div class="p-3 rounded border border-[var(--border)] bg-[var(--background)] flex items-center justify-between">
+                  <span>3. What are the corporate firewall and TLS interception implications for streaming clients?</span>
+                  <input type="checkbox" checked class="rounded text-purple-600">
+                </div>
+              </div>
+
+              <div class="pt-3 flex justify-end">
+                <button onclick="loadDeepResearchStep('exec')" class="px-4 py-2 rounded-md bg-purple-600 hover:bg-purple-700 text-white font-medium text-xs shadow-xs cursor-pointer">
+                  Approve Plan & Launch Step 2 Execution →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="dr-exec-view" class="hidden space-y-4">
+          <div class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-5 space-y-4">
+            <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-purple-500 animate-ping"></span>
+                <h3 class="text-sm font-bold">Execution Stream Progress</h3>
+              </div>
+              <span class="px-2 py-0.5 rounded text-xs font-mono bg-purple-500/10 text-purple-600 dark:text-purple-400 font-semibold">LIVE SYNTHESIS</span>
+            </div>
+
+            <div class="space-y-3 text-xs font-mono" id="dr-exec-feed">
+              <div class="p-3 rounded border border-blue-500/30 bg-blue-500/5">
+                <span class="font-bold text-blue-500">[RESEARCH_QUESTION]</span> Exploring sub-question 1: Speculative decoding architectures...
+              </div>
+              <div class="p-3 rounded border border-purple-500/30 bg-purple-500/5">
+                <span class="font-bold text-purple-500">[RESEARCH_ANSWER]</span> Synthesized 8 research papers and corporate whitepapers.
+              </div>
+              <div class="p-3 rounded border border-emerald-500/30 bg-emerald-500/5">
+                <span class="font-bold text-emerald-500">[RESEARCH_REPORT]</span> Final synthesis assembled: 4 sections, 14 citations.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 7: TEST SUITES ================= -->
+      <section id="view-testsuites" class="tab-view hidden space-y-5">
+        <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+          <div>
+            <h2 class="text-lg font-bold tracking-tight">Test Suites & Reliability Dashboard</h2>
+            <p class="text-xs text-[var(--muted-foreground)]">Local smoke check execution harness (<code class="mono text-[11px]">scripts/run-all.sh</code>) and 24-hour Cloud Run soak benchmark viewer.</p>
+          </div>
+          <button id="run-smoke-btn" onclick="runSmokeSuite()" class="px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-xs cursor-pointer">
+            Run Smoke Suite ▶
+          </button>
+        </div>
+
+        <!-- Metric KPI Cards -->
+        <div class="grid grid-cols-4 gap-4">
+          <div class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
+            <div class="text-xs text-[var(--muted-foreground)] font-medium">Smoke Suite Status</div>
+            <div class="text-2xl font-bold text-emerald-500 mt-1" id="smoke-summary">12 / 12 PASS</div>
+            <div class="text-[10px] text-[var(--muted-foreground)] mt-1">Total runtime: 3.4s</div>
+          </div>
+
+          <div class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
+            <div class="text-xs text-[var(--muted-foreground)] font-medium">24h Soak Availability</div>
+            <div class="text-2xl font-bold text-blue-500 mt-1">99.86%</div>
+            <div class="text-[10px] text-[var(--muted-foreground)] mt-1">2,880 queries on Cloud Run</div>
+          </div>
+
+          <div class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
+            <div class="text-xs text-[var(--muted-foreground)] font-medium">P90 Stream Latency</div>
+            <div class="text-2xl font-bold text-purple-500 mt-1">380 ms</div>
+            <div class="text-[10px] text-[var(--muted-foreground)] mt-1">Fast tier (P50: 240ms)</div>
+          </div>
+
+          <div class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
+            <div class="text-xs text-[var(--muted-foreground)] font-medium">Routing Fidelity Rate</div>
+            <div class="text-2xl font-bold text-indigo-500 mt-1">96.2%</div>
+            <div class="text-[10px] text-[var(--muted-foreground)] mt-1">Gotcha #2 occurrences: 0.49%</div>
+          </div>
+        </div>
+
+        <!-- Smoke Checks Table -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-lg p-5 space-y-3">
+          <div class="flex items-center justify-between text-xs font-semibold uppercase text-[var(--muted-foreground)] tracking-wider">
+            <span>Fast Smoke Checks (<code class="mono text-[10px]">./scripts/run-all.sh</code>)</span>
+            <span class="text-emerald-500"><span id="smoke-pass-count">12</span> Passed</span>
+          </div>
+
+          <div class="space-y-2 text-xs" id="smoke-test-list">
+            <!-- Populated via app.js -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ================= GLOSSARY MODAL ================= -->
+  <div id="glossary-modal" class="fixed inset-0 bg-black/50 backdrop-blur-xs hidden items-center justify-center z-50 p-6">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl max-w-xl w-full p-6 space-y-4 shadow-xl">
+      <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+        <h3 class="text-base font-bold">API Glossary & Vocabulary</h3>
+        <button onclick="hideGlossaryModal()" class="text-[var(--muted-foreground)] hover:text-[var(--foreground)] text-sm">✕</button>
+      </div>
+      <div class="text-xs space-y-3 max-h-[400px] overflow-y-auto">
+        <div class="p-2.5 rounded bg-[var(--background)] border border-[var(--border)] space-y-1">
+          <div class="font-bold text-blue-500 font-mono">agentsSpec</div>
+          <div class="text-[var(--muted-foreground)]">Scopes the orchestrator planner to consider a specific subset of configured agents. Note: scopes, does not guarantee force (Gotcha #2).</div>
+        </div>
+        <div class="p-2.5 rounded bg-[var(--background)] border border-[var(--border)] space-y-1">
+          <div class="font-bold text-blue-500 font-mono">assistToken</div>
+          <div class="text-[var(--muted-foreground)]">Opaque token returned on nearly every response chunk. Used for correlation and Google Cloud support incident tracing.</div>
+        </div>
+        <div class="p-2.5 rounded bg-[var(--background)] border border-[var(--border)] space-y-1">
+          <div class="font-bold text-blue-500 font-mono">contentKind</div>
+          <div class="text-[var(--muted-foreground)]">Type marker on response chunks (e.g., RESEARCH_PLAN, RESEARCH_QUESTION, RESEARCH_REPORT). Essential for Deep Research demuxing.</div>
+        </div>
+        <div class="p-2.5 rounded bg-[var(--background)] border border-[var(--border)] space-y-1">
+          <div class="font-bold text-blue-500 font-mono">Thought (thought: true)</div>
+          <div class="text-[var(--muted-foreground)]">Interleaved reasoning steps generated by the model. Must be demuxed and filtered away from user-facing answer markdown (Gotcha #10).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

@@ -1,9 +1,11 @@
 # Gemini Enterprise — Stream Assist guide
 # Common entry points; every target is safe to re-run.
 
-.PHONY: help env discover smoke smoke-full python-deps clean
+.PHONY: help env discover smoke smoke-full python-deps clean ui ui-test
 
 help:
+	@echo "make ui          - start the local interactive StreamAssist Studio (zero-config)"
+	@echo "make ui-test     - run offline unit tests for the Studio simulator"
 	@echo "make soak-*      - 24h reliability soak test on Cloud Run (see soak/README.md)"
 	@echo "make env         - create .env from the template (edit it after)"
 	@echo "make discover    - list your apps and agents (uses .env or: make discover PROJECT=my-proj)"
@@ -53,3 +55,10 @@ soak-report:      ## render + download the campaign report: make soak-report LAB
 soak-local:       ## run the fast tier once from this machine (needs .venv + ADC), results in soak/out/
 	cd soak && set -a && . ../.env && set +a && SSL_CERT_FILE=/etc/ssl/cert.pem REQUESTS_CA_BUNDLE=/etc/ssl/cert.pem \
 	  ../.venv/bin/python -m soak --local out run --tier fast --all --ignore-campaign
+
+# ---- Interactive Studio (web/) ----------------------------------------
+ui:               ## start the local interactive StreamAssist Studio
+	node web/server/index.mjs
+
+ui-test:          ## run offline unit tests for the Studio simulator
+	node web/server/test_simulator.mjs
